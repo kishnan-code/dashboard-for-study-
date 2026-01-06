@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+venv
+.venv
+.git
+.gitignore
+*.log
+.DS_Store
+notebook/
+predictions.csv
+iq_history.json
