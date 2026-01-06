@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CGPA Prediction </title>
+  <style>
+    :root {
+      --orange: #ff6600;
+      --blue: #0066cc;
+      --yellow: #ffcc00;
+      --red: #cc0000;
+      --dark: #333333;
+      --light: #f5f5f5;
+    }
+
+    body {
+      font-family: "Roboto", sans-serif;
+      background-color: #f0f0f0;
+      background-size: cover;
+      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
+      color: var(--dark);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      border: 3px solid var(--orange);
+    }
+
+    .header {
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(135deg, var(--orange), var(--yellow));
+      color: white;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 2;
+    }
+
+    .header::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      right: -10px;
+      bottom: -10px;
+
+      opacity: 0.2;
+      z-index: 1;
+    }
+
+    .form-container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 25px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-left: 5px solid var(--blue);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .form-container::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100px;
+      height: 100px;
+
+      opacity: 0.1;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: var(--dark);
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--orange);
+      outline: none;
+    }
+
+    button {
+      background-color: var(--orange);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+      width: 100%;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      background-color: var(--blue);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .required:after {
+      content: " *";
+      color: var(--red);
+    }
+
+    .ninja-message {
+      text-align: center;
+      margin: 20px 0;
+      font-style: italic;
+      color: var(--dark);
+    }
+
+    .hidden-leaf-symbol {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .hidden-leaf-symbol img {
+      width: 60px;
+      opacity: 0.7;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        margin: 15px;
+        padding: 15px;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+    }
+
+    .button-link {
+      display: inline-block;
+      margin-top: 20px;
+      background-color: #0066cc;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+
+    .button-link:hover {
+      background-color: #004c99;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>CGPA Prediction</h1>
+    </div>
+
+    <div class="ninja-message">
+      "A ninja's true strength comes from knowledge! Predict your academic
+      future!"
+    </div>
+
+    <div class="form-container">
+      <form id="cgpaForm" action="/predict" method="POST">
+        <div class="form-group">
+          <label for="student_name" class="required">Student Name</label>
+          <input type="text" id="student_name" name="student_name" required />
+        </div>
+
+        <div class="form-group">
+          <label for="gender" class="required">Gender</label>
+          <select id="gender" name="gender" required>
+            <option value="">Select Gender</option>
+            <option value="1">Male</option>
+            <option value="0">Female</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="age" class="required">Age</label>
+          <input type="number" id="age" name="age" min="15" max="30" required />
+        </div>
+
+        <div class="form-group">
+          <label for="attendance" class="required">Attendance (Current %)</label>
+          <input type="number" id="attendance" name="attendance" min="0" max="100" step="0.1" required />
+        </div>
+
+        <div class="form-group">
+          <label for="highschool_gpa" class="required">HSC ( percent % )</label>
+          <input type="number" id="highschool_gpa" name="highschool_gpa" min="0" max="100" step="0.01" required />
+        </div>
+
+        <div class="form-group">
+          <label for="internal_assessments" class="required">Internal Assessments (out of 20)</label>
+          <input type="number" id="internal_assessments" name="internal_assessments" min="0" max="100" step="0.1"
+            required />
+        </div>
+
+        <div class="form-group">
+          <label for="participation_score" class="required">Participation Score (0-5)</label>
+          <input type="number" id="participation_score" name="participation_score" min="0" max="5" step="0.1"
+            required />
+        </div>
+
+        <div class="form-group">
+          <label for="projects_completed" class="required">Projects Completed (0-5)</label>
+          <input type="number" id="projects_completed" name="projects_completed" min="0" max="10" required />
+        </div>
+
+        <div class="form-group">
+          <label for="study_hours" class="required">Study Hours Per Week</label>
+          <input type="number" id="study_hours" name="study_hours" min="0" max="40" step="0.1" required />
+        </div>
+
+        <div class="form-group">
+          <label for="backlogs" class="required">Backlogs</label>
+          <input type="number" id="backlogs" name="backlogs" min="0" max="10" required />
+        </div>
+
+        <div class="form-group">
+          <label for="sem1_gpa" class="required">Semester 1 GPA</label>
+          <input type="number" id="sem1_gpa" name="sem1_gpa" min="0" max="10" step="0.01" />
+          required
+        </div>
+
+        <div class="form-group">
+          <label for="sem2_gpa" class="required">Semester 2 GPA</label>
+          <input type="number" id="sem2_gpa" name="sem2_gpa" min="0" max="10" step="0.01" required />
+        </div>
+
+        <button type="submit">Predict My CGPA</button>
+      </form>
+    </div>
+
+    <div class="ninja-message">
+      "Believe it! With the right data, we can predict your ninja way to
+      success!"
+    </div>
+  </div>
+</body>
+
+</html>

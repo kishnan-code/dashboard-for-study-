@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IQ Master - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --powerbi-blue: #00b0ad;
+            --powerbi-dark: #2b2b2b;
+            --powerbi-light: #f2f2f2;
+            --powerbi-accent: #ffb900;
+            --bg-color: #f2f2f2;
+            --card-bg: #ffffff;
+            --text-color: #2b2b2b;
+            --border-color: #dddddd;
+        }
+
+        body.dark-mode {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --border-color: #404040;
+            --powerbi-light: #1a1a1a;
+        }
+
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            margin: 0;
+            padding: 0;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--powerbi-blue);
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--powerbi-blue);
+        }
+
+        .header-subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid var(--powerbi-blue);
+            color: var(--text-color);
+        }
+
+        .kpi-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--powerbi-blue);
+        }
+
+        /* Level Cards Style Matching Planner Items */
+        .levels-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            margin-top: 20px;
+        }
+
+        .level-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .level-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            border-color: var(--powerbi-blue);
+        }
+
+        .level-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--powerbi-dark);
+            margin-bottom: 5px;
+        }
+
+        .btn {
+            background-color: var(--powerbi-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #008a87;
+        }
+
+        .btn.locked {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Charts Grid matching result.html */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--powerbi-dark);
+        }
+
+        .chart-container {
+            height: 300px;
+            width: 100%;
+        }
+
+        /* Theme Toggle */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+        }
+
+        .theme-switch {
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            width: 50px;
+        }
+
+        .theme-switch input {
+            display: none;
+        }
+
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            background-color: #fff;
+            bottom: 4px;
+            content: "";
+            height: 16px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 16px;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--powerbi-blue);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        @media (max-width: 768px) {
+            .kpi-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                margin-top: 15px;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div>
+                <div class="header-title">Cognitive Performance Dashboard</div>
+                <div class="header-subtitle">{{ student_name }}'s IQ Progression & Mental Agility</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button onclick="window.location.href='/result'" class="btn"
+                    style="background:#666; margin:0; border:none; color:white; font-family: inherit; font-size: inherit;">Back
+                    to Result</button>
+                <div class="theme-switch-wrapper">
+                    <label class="theme-switch" for="checkbox">
+                        <input type="checkbox" id="checkbox" />
+                        <span class="slider round"></span>
+                    </label>
+                    <span style="margin-left: 10px; font-size: 14px;">🌙</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- High-Level Stats (KPIs) -->
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <div class="kpi-title">Average Score</div>
+                <div class="kpi-value" id="avgScore">{{ avg_score }}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Tests Taken</div>
+                <div class="kpi-value" id="totalTests">{{ total_tests }}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Highest Level</div>
+                <div class="kpi-value" id="maxLevel">-</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Brain Rank</div>
+                <div class="kpi-value" style="color: var(--powerbi-accent);" id="brainRank">Novice</div>
+            </div>
+        </div>
+
+        <!-- Level Selector -->
+        <h3
+            style="color: var(--powerbi-dark); border-left: 4px solid var(--powerbi-blue); padding-left: 10px; margin-top: 0;">
+            Select Challenge Level
+        </h3>
+        <div class="levels-container">
+            <div class="level-card">
+                <div class="level-title">Level 1</div>
+                <p style="color: #666;">Logic & Patterns</p>
+                <div style="font-size:12px; color:#aaa; margin-bottom: 5px;">Difficulty: Easy</div>
+                <a href="/iq/test/1" class="btn">Start Test</a>
+            </div>
+            <div class="level-card">
+                <div class="level-title">Level 2</div>
+                <p style="color: #666;">Verbal Reasoning</p>
+                <div style="font-size:12px; color:#aaa; margin-bottom: 5px;">Difficulty: Medium</div>
+                <a href="/iq/test/2" class="btn">Start Test</a>
+            </div>
+            <div class="level-card">
+                <div class="level-title">Level 3</div>
+                <p style="color: #666;">Analytical Puzzles</p>
+                <div style="font-size:12px; color:#aaa; margin-bottom: 5px;">Difficulty: Hard</div>
+                <a href="/iq/test/3" class="btn locked"
+                    onclick="if(this.classList.contains('locked')) return false;">Locked 🔒</a>
+            </div>
+            <div class="level-card">
+                <div class="level-title">Level 4</div>
+                <p style="color: #666;">Expert Logic</p>
+                <div style="font-size:12px; color:#aaa; margin-bottom: 5px;">Difficulty: Expert</div>
+                <a href="/iq/test/4" class="btn locked"
+                    onclick="if(this.classList.contains('locked')) return false;">Locked 🔒</a>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <h3
+            style="color: var(--powerbi-dark); border-left: 4px solid var(--powerbi-blue); padding-left: 10px; margin-top: 30px;">
+            Performance Analytics
+        </h3>
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Avg Score per Level</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Cognitive Strengths</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">IQ Growth Trend</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Overall Accuracy</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="accuracyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch Data and Render Charts
+        async function fetchHistory() {
+            try {
+                const response = await fetch('/api/iq/history');
+                const data = await response.json();
+                renderCharts(data);
+                updateStats(data);
+                unlockLevels(data);
+            } catch (e) {
+                console.error("Failed to load history:", e);
+            }
+        }
+
+        // --- Dark Mode Logic (Shared) ---
+        const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
+        if (toggleSwitch) {
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme) {
+                document.body.classList.add(currentTheme);
+                if (currentTheme === 'dark-mode') toggleSwitch.checked = true;
+            }
+            toggleSwitch.addEventListener('change', function (e) {
+                if (e.target.checked) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light-mode');
+                }
+            });
+        }
+
+        function updateStats(data) {
+            if (!data.length) return;
+
+            // Calc max level
+            const levels = data.map(d => parseInt(d.level));
+            const maxLvl = Math.max(...levels, 0);
+            if (maxLvl > 0) document.getElementById('maxLevel').innerText = "Lvl " + maxLvl;
+
+            // Calc Rank
+            const avg = parseFloat(document.getElementById('avgScore').innerText);
+            let rank = "Novice";
+            if (avg > 90) rank = "Grandmaster";
+            else if (avg > 75) rank = "Genius";
+            else if (avg > 60) rank = "Scholar";
+            else if (avg > 40) rank = "Apprentice";
+
+            document.getElementById('brainRank').innerText = rank;
+        }
+
+        function unlockLevels(data) {
+            const passedLevels = new Set();
+            data.forEach(d => {
+                if (d.score >= 40) passedLevels.add(parseInt(d.level));
+            });
+
+            // Unlock Level 3 if Level 2 passed
+            if (passedLevels.has(2)) {
+                const btn3 = document.querySelector('a[href="/iq/test/3"]');
+                if (btn3) {
+                    btn3.innerText = "Start Test";
+                    btn3.classList.remove('locked');
+                }
+            }
+
+            // Unlock Level 4 if Level 3 passed
+            if (passedLevels.has(3)) {
+                const btn4 = document.querySelector('a[href="/iq/test/4"]');
+                if (btn4) {
+                    btn4.innerText = "Start Test";
+                    btn4.classList.remove('locked');
+                }
+            }
+        }
+
+        function renderCharts(data) {
+            const labels = data.map((d, i) => `Test ${i + 1}`);
+            const scores = data.map(d => d.score);
+
+            // 1. Growth Chart
+            new Chart(document.getElementById('growthChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'IQ Score',
+                        data: scores,
+                        borderColor: '#00b0ad',
+                        backgroundColor: 'rgba(0, 176, 173, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 120 } }
+                }
+            });
+
+            // 2. Radar Chart
+            const categories = {};
+            data.forEach(d => {
+                const perf = d.category_performance || {};
+                for (const [cat, val] of Object.entries(perf)) {
+                    if (!categories[cat]) categories[cat] = { total: 0, correct: 0 };
+                    categories[cat].total += val.total;
+                    categories[cat].correct += val.correct;
+                }
+            });
+
+            const catLabels = Object.keys(categories);
+            const catData = catLabels.map(c => categories[c].total > 0 ? (categories[c].correct / categories[c].total) * 100 : 0);
+            if (catLabels.length === 0) {
+                // Dummy
+                catLabels.push('Logic', 'Math', 'Patterns');
+                catData.push(0, 0, 0);
+            }
+
+            new Chart(document.getElementById('radarChart'), {
+                type: 'radar',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        label: 'Strengths',
+                        data: catData,
+                        backgroundColor: 'rgba(255, 185, 0, 0.2)',
+                        borderColor: '#ffb900',
+                        pointBackgroundColor: '#ffb900'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { r: { min: 0, max: 100 } }
+                }
+            });
+
+            // 3. Score per Level
+            const levelScores = { '1': [], '2': [], '3': [], '4': [] };
+            data.forEach(d => {
+                if (levelScores[d.level]) levelScores[d.level].push(d.score);
+            });
+
+            const avgLvlScores = ['1', '2', '3', '4'].map(l => {
+                const s = levelScores[l];
+                return s.length ? s.reduce((a, b) => a + b, 0) / s.length : 0;
+            });
+
+            new Chart(document.getElementById('scoreChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Level 1', 'Level 2', 'Level 3', 'Level 4'],
+                    datasets: [{
+                        label: 'Avg Score',
+                        data: avgLvlScores,
+                        backgroundColor: ['#00b0ad', '#ffb900', '#2b2b2b', '#6c757d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+
+            // 4. Accuracy
+            let totalCorrect = 0;
+            let totalQs = 0;
+            data.forEach(d => {
+                totalCorrect += d.correct || 0;
+                totalQs += d.total || 0;
+            });
+            const wrong = totalQs - totalCorrect;
+
+            new Chart(document.getElementById('accuracyChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Correct', 'Incorrect'],
+                    datasets: [{
+                        data: [totalCorrect, wrong],
+                        backgroundColor: ['#00b0ad', '#eeeeee'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        fetchHistory();
+    </script>
+</body>
+
+</html>

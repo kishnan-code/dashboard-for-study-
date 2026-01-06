@@ -1,0 +1,2396 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mission Planner - CGPA Prediction</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --powerbi-blue: #00b0ad;
+            --powerbi-dark: #2b2b2b;
+            --powerbi-light: #f2f2f2;
+            --powerbi-accent: #ffb900;
+            /* New Theme Variables */
+            --bg-color: #f2f2f2;
+            --card-bg: #ffffff;
+            --text-color: #2b2b2b;
+            --border-color: #dddddd;
+        }
+
+        body.dark-mode {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --border-color: #404040;
+            --powerbi-light: #1a1a1a;
+        }
+
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .view-history-btn {
+            background-color: var(--powerbi-blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 176, 173, 0.3);
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-align: center;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+
+        .view-history-btn:hover {
+            background-color: #008a87;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 176, 173, 0.4);
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--powerbi-blue);
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--powerbi-blue);
+        }
+
+        .header-subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid var(--powerbi-blue);
+            color: var(--text-color);
+        }
+
+        .kpi-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--powerbi-dark);
+        }
+
+        .kpi-change {
+            font-size: 12px;
+            color: #4caf50;
+            margin-top: 5px;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--powerbi-dark);
+        }
+
+        .chart-container {
+            height: 300px;
+            width: 100%;
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--powerbi-blue);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .prediction-highlight {
+            background-color: rgba(0, 176, 173, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+            border: 1px solid rgba(0, 176, 173, 0.2);
+        }
+
+        .prediction-label {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .prediction-value {
+            font-size: 48px;
+            font-weight: 600;
+            color: #00b0ad;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .prediction-status {
+            font-size: 16px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .prediction-status.excellent {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+        }
+
+        .prediction-status.good {
+            background-color: rgba(241, 196, 15, 0.2);
+            color: #f39c12;
+        }
+
+        .prediction-status.improve {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .prediction-message {
+            color: #666;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+
+        .performance-breakdown {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .breakdown-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        .trend-icon,
+        .attendance-icon,
+        .study-icon {
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .prediction-value {
+                font-size: 36px;
+                flex-direction: column;
+            }
+
+            .performance-breakdown {
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+        }
+
+        .recommendations {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .recommendation-item {
+            margin-bottom: 15px;
+            padding-left: 20px;
+            border-left: 3px solid var(--powerbi-blue);
+        }
+
+        /* Planner Classes */
+        .planner-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .subject-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 0.5fr;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: end;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            min-width: 600px;
+        }
+
+        /* Mobile Media Queries */
+        @media (max-width: 768px) {
+            .kpi-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .planner-grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .subject-row {
+                grid-template-columns: 1fr;
+                padding: 15px;
+                gap: 15px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .student-name-display {
+                width: 100%;
+                text-align: right;
+                margin-top: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Dark Mode Toggle */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+        }
+
+        .theme-switch {
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            width: 50px;
+        }
+
+        .theme-switch input {
+            display: none;
+        }
+
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            background-color: #fff;
+            bottom: 4px;
+            content: "";
+            height: 16px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 16px;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--powerbi-blue);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            .dashboard-header .view-history-btn,
+            .theme-switch-wrapper,
+            .no-print {
+                display: none !important;
+            }
+
+            .dashboard-container {
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+
+            .kpi-card,
+            .chart-card {
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+
+        /* News Ticker Styles */
+        .news-ticker-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            /* Subtle shadow */
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            border-left: 5px solid var(--powerbi-accent);
+        }
+
+        .news-label {
+            background: var(--powerbi-accent);
+            color: #000;
+            padding: 12px 20px;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .news-content-wrapper {
+            flex: 1;
+            padding: 12px 20px;
+            position: relative;
+            overflow: hidden;
+            height: 44px;
+            /* Fixed height for vertical slide */
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+        }
+
+        .news-item {
+            position: absolute;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            font-weight: 500;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .news-item.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .news-item.exit {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .news-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(0, 176, 173, 0.15);
+            color: var(--powerbi-blue);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div>
+                <div class="header-title">Mission Planner</div>
+                <div class="header-subtitle">{{ student_name }}'s Academic Strategy</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button onclick="window.location.href='/result'"
+                    style="background: #666; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px;">Back
+                    to Home</button>
+                <button onclick="window.print()"
+                    style="background: var(--powerbi-blue); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px;">🖨️
+                    Print Plan</button>
+                <div class="theme-switch-wrapper">
+                    <label class="theme-switch" for="checkbox">
+                        <input type="checkbox" id="checkbox" />
+                        <span class="slider round"></span>
+                    </label>
+                    <span style="margin-left: 10px; font-size: 14px;">🌙</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="studyPlanner" class="recommendations"
+            style="margin-top: 30px; border-top: 4px solid var(--powerbi-accent);">
+            <div class="chart-header">
+                <div class="chart-title">Custom Mission Planner</div>
+                <div class="header-subtitle">Plan your study schedule based on available time</div>
+            </div>
+
+            <div class="ninja-quote" style="font-style: italic; color: #666; margin-bottom: 20px; text-align: center;">
+                "A plan without action is a daydream. But action without a plan is a nightmare. Plan your mission!"
+            </div>
+
+            <form action="/planner" method="POST">
+                <!-- Hidden fields to pass student metrics for advanced analysis -->
+                <input type="hidden" name="student_name" value="{{ student_name }}">
+                <input type="hidden" name="sem1_gpa" value="{{ sem1_gpa }}">
+                <input type="hidden" name="sem2_gpa" value="{{ sem2_gpa }}">
+                <input type="hidden" name="attendance" value="{{ attendance }}">
+                <input type="hidden" name="backlogs" value="{{ backlogs }}">
+                <input type="hidden" name="internal_assessments" value="{{ internal_assessments }}">
+                <input type="hidden" name="projects_completed" value="{{ projects_completed }}">
+                <input type="hidden" name="highschool_gpa" value="{{ highschool_gpa }}">
+                <input type="hidden" name="participation_score" value="{{ participation_score }}">
+
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <div class="planner-grid-2">
+                        <div>
+                            <label style="display:block; font-weight:600; margin-bottom:5px;">Daily Study Hours:</label>
+                            <input type="number" name="daily_hours" step="0.5" min="0.5" max="24"
+                                value="{{ daily_hours if daily_hours else 4 }}" required class="form-input">
+                        </div>
+                        <div>
+                            <label style="display:block; font-weight:600; margin-bottom:5px;">Peak Energy Time:</label>
+                            <select name="energy_peak" class="form-input">
+                                <option value="Morning" {% if comprehensive_plan.energy_peak=='Morning' %}selected{%
+                                    endif %}>🌞 Morning
+                                    (6 AM)</option>
+                                <option value="Evening" {% if not comprehensive_plan.energy_peak or
+                                    comprehensive_plan.energy_peak=='Evening' %}selected{% endif %}>🌇 Evening (6 PM)
+                                </option>
+                                <option value="Night" {% if comprehensive_plan.energy_peak=='Night' %}selected{% endif
+                                    %}>🌙 Night (9
+                                    PM)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin-top: 0; color: var(--powerbi-blue);">Target List (Subjects)</h4>
+                    <div id="subjects-container">
+                        {% if preserved_data %}
+                        {% for data in preserved_data %}
+                        <div class="subject-row">
+                            <div>
+                                <label style="font-size:12px; font-weight:600;">Subject</label>
+                                <input type="text" name="subject_name" placeholder="Name" value="{{ data.subject }}"
+                                    required class="form-input">
+                            </div>
+                            <div>
+                                <label style="font-size:12px; font-weight:600;">Difficulty (1-10)</label>
+                                <input type="number" name="difficulty" min="1" max="10" value="{{ data.difficulty }}"
+                                    class="form-input">
+                            </div>
+                            <div>
+                                <label style="font-size:12px; font-weight:600;">Tasks</label>
+                                <input type="number" name="tasks" min="1" value="{{ data.tasks }}"
+                                    placeholder="Remaining" class="form-input">
+                            </div>
+                            <div>
+                                <label style="font-size:12px; font-weight:600;">Exam Date</label>
+                                <input type="date" name="exam_date" value="{{ data.exam_date }}" class="form-input">
+                            </div>
+                            <div>
+                                <button type="button" onclick="this.parentElement.parentElement.remove()"
+                                    style="background: var(--powerbi-accent); color: var(--powerbi-dark); border: none; padding: 8px; border-radius: 4px; cursor: pointer; width: 100%;">X</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="subject-row">
+                            <div>
+                                <label style="font-size:12px; font-weight:600;">Subject</label>
+                                <input type="text" name="subject_name" placeholder="Name" required class="form-input">
+                            </div>
+                            <div>
+                                <label style="font-size:12px; font-weight:600;">Difficulty (1-10)</label>
+                                <input type="number" name="difficulty" min="1" max="10" value="5" class="form-input">
+                            </div>
+                            <div>
+                                <label style="font-size:12px; font-weight:600;">Tasks</label>
+                                <input type="number" name="tasks" min="1" value="1" placeholder="Remaining"
+                                    class="form-input">
+                            </div>
+                            <div>
+                                <label style="font-size:12px; font-weight:600;">Exam Date</label>
+                                <input type="date" name="exam_date" class="form-input">
+                            </div>
+                            <div></div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <button type="button" onclick="addSubject()"
+                        style="background: var(--powerbi-blue); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">+
+                        Add Target</button>
+                </div>
+
+                <button type="submit"
+                    style="background: var(--powerbi-accent); color: var(--powerbi-dark); border: none; padding: 12px 24px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px;">Generate
+                    Mission Plan</button>
+            </form>
+
+            {% if plan %}
+            <div class="plan-result"
+                style="margin-top: 30px; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+
+                {% if comprehensive_plan %}
+                <div style="margin-bottom: 30px; border-bottom: 2px dashed #ddd; padding-bottom: 20px;">
+                    <h2 style="color: var(--powerbi-blue); margin-top: 0;">Strategy Analysis</h2>
+
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
+                        <!-- Category Card -->
+                        {% set cat_bg = '#e6fffa' if comprehensive_plan.cat_class == 'high' else ('#ffebeb' if
+                        comprehensive_plan.cat_class == 'risk' else '#eef6ff') %}
+                        {% set cat_border = '#28a745' if comprehensive_plan.cat_class == 'high' else ('#dc3545' if
+                        comprehensive_plan.cat_class == 'risk' else '#007bff') %}
+                        <div style="flex: 1; min-width: 200px; padding: 15px; border-radius: 8px; 
+                      --cat-bg: {{ cat_bg }}; --cat-border: {{ cat_border }};
+                      background-color: var(--cat-bg);
+                      border-left: 5px solid var(--cat-border);">
+                            <strong
+                                style="display: block; font-size: 12px; color: #666; text-transform: uppercase;">Student
+                                Classification</strong>
+                            <span style="font-size: 18px; font-weight: bold; color: #333;">{{
+                                comprehensive_plan.category }}</span>
+                        </div>
+
+                        <div
+                            style="flex: 1; min-width: 200px; padding: 15px; border-radius: 8px; background-color: #fff9e6; border-left: 5px solid #ffc107;">
+                            <strong
+                                style="display: block; font-size: 12px; color: #666; text-transform: uppercase;">Difficulty
+                                Level</strong>
+                            <span style="font-size: 18px; font-weight: bold; color: #333;">{{
+                                comprehensive_plan.difficulty }}</span>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-bottom: 10px;">Daily Time Distribution ({{ comprehensive_plan.daily_total }}
+                        Hours)</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+                        {% for area, minutes in comprehensive_plan.allocations.items() %}
+                        {% if minutes > 0 %}
+                        <div
+                            style="background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #eee;">
+                            <div style="font-size: 12px; color: #777;">{{ area }}</div>
+                            <div style="font-size: 16px; font-weight: bold; color: var(--powerbi-blue);">
+                                {{ (minutes / 60)|round(1) }} hr
+                                <span style="font-size: 12px; color: #999; font-weight: normal;">({{ minutes }}m)</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <div style="margin-top:20px; padding-top:20px; border-top: 2px dashed #ddd;">
+                        <h4 style="margin-bottom: 15px; color: var(--powerbi-dark);">Advanced {{ student_name }} Metrics
+                        </h4>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+
+                            <!-- Risk Score -->
+                            <div
+                                style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                <div style="font-size: 11px; color: #888; text-transform: uppercase;">Academic Risk
+                                    Score</div>
+                                <div style="display:flex; align-items: baseline; margin-top: 5px;">
+                                    {% set risk_color = '#dc3545' if comprehensive_plan.risk_score > 60 else ('#ffc107'
+                                    if comprehensive_plan.risk_score > 30 else '#28a745') %}
+                                    <span
+                                        style="font-size: 24px; font-weight: bold; --risk-color: {{ risk_color }}; color: var(--risk-color);">{{
+                                        comprehensive_plan.risk_score }}</span>
+                                    <span style="font-size: 14px; color: #666; margin-left: 5px;">/ 100</span>
+                                </div>
+                            </div>
+
+                            <!-- Ninja Rank -->
+                            <div
+                                style="background: linear-gradient(135deg, #2c3e50, #4ca1af); color:white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.8); text-transform: uppercase;">
+                                    {{ student_name
+                                    }} Rank</div>
+                                <div style="font-size: 20px; font-weight: bold; margin-top: 5px;">{{
+                                    comprehensive_plan.ninja_rank }}
+                                </div>
+                                <div style="font-size: 12px; margin-top: 2px;">+{{ comprehensive_plan.potential_xp }} XP
+                                    Potential</div>
+                            </div>
+
+                            <!-- Next GPA -->
+                            <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                                <div style="font-size: 11px; color: #888; text-transform: uppercase;">Predicted Next GPA
+                                </div>
+                                <div style="display:flex; align-items: baseline; margin-top: 5px;">
+                                    <span style="font-size: 24px; font-weight: bold; color: var(--powerbi-blue);">{{
+                                        comprehensive_plan.predicted_next_gpa }}</span>
+                                    <span style="font-size: 12px; color: #28a745; margin-left: 8px;">(Estimated)</span>
+                                </div>
+                            </div>
+
+                            <!-- Focus & Break -->
+                            <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                                <div style="font-size: 11px; color: #888; text-transform: uppercase;">Focus Strategy
+                                </div>
+                                <div style="font-size: 14px; font-weight: bold; margin-top: 5px; color: #333;">{{
+                                    comprehensive_plan.break_strategy }}</div>
+                                <div style="font-size: 11px; color: #666; margin-top: 2px;">Level: {{
+                                    comprehensive_plan.focus_level }}
+                                </div>
+                            </div>
+
+                            <!-- Learning Speed -->
+                            <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                                <div style="font-size: 11px; color: #888; text-transform: uppercase;">Learning Speed
+                                </div>
+                                <div style="font-size: 16px; font-weight: bold; margin-top: 5px; color: #333;">{{
+                                    comprehensive_plan.learning_speed }}</div>
+                                <div style="font-size: 11px; color: #666; font-style: italic; margin-top: 2px;">"{{
+                                    comprehensive_plan.learning_tip }}"</div>
+                            </div>
+
+                            <!-- Day Theme -->
+                            <div
+                                style="background: #e3f2fd; padding: 15px; border-radius: 8px; border: 1px solid #90caf9;">
+                                <div style="font-size: 11px; color: #1565c0; text-transform: uppercase;">Today's Theme
+                                </div>
+                                <div style="font-size: 15px; font-weight: bold; margin-top: 5px; color: #0d47a1;">{{
+                                    comprehensive_plan.day_theme }}</div>
+                                <div style="font-size: 11px; color: #1e88e5; margin-top: 2px;">Energy Peak: {{
+                                    comprehensive_plan.energy_peak }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if comprehensive_plan.adjustments %}
+                    <div style="margin-top: 20px; padding: 10px; background-color: #f0f4f8; border-radius: 6px;">
+                        <strong style="color: #666;">🔄 Dynamic Adjustments Applied:</strong>
+                        <ul style="margin: 5px 0 0 20px; color: #444; font-size: 14px;">
+                            {% for adj in comprehensive_plan.adjustments %}
+                            <li>{{ adj }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if comprehensive_plan.timetable %}
+                <div style="margin-top: 30px; margin-bottom: 30px;">
+                    <h3
+                        style="color: var(--powerbi-dark); border-left: 4px solid var(--powerbi-blue); padding-left: 10px;">
+                        🚀
+                        Daily Mission Tracker</h3>
+
+                    <!-- NEW METRICS DASHBOARD FOR MISSION TRACKER -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px;">
+                        <!-- Total Study Time -->
+                        <div
+                            style="background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); padding: 15px; border-radius: 10px; color: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div style="font-size: 24px;">⏳</div>
+                            <div>
+                                <div style="font-size: 12px; opacity: 0.9;">Total Target Time</div>
+                                <div style="font-size: 20px; font-weight: bold;">{{ comprehensive_plan.daily_total }}
+                                    hrs</div>
+                            </div>
+                        </div>
+                        <!-- Completed Time -->
+                        <div
+                            style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 15px; border-radius: 10px; color: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div style="font-size: 24px;">✅</div>
+                            <div>
+                                <div style="font-size: 12px; opacity: 0.9;">Completed Time</div>
+                                <div style="font-size: 20px; font-weight: bold;"><span
+                                        id="dynamicCompletedTime">0.0</span> hrs</div>
+                            </div>
+                        </div>
+                        <!-- Focus Level -->
+                        <div
+                            style="background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); padding: 15px; border-radius: 10px; color: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div style="font-size: 24px;">🎯</div>
+                            <div>
+                                <div style="font-size: 12px; opacity: 0.9;">Focus Level</div>
+                                <div style="font-size: 16px; font-weight: bold;">{{ comprehensive_plan.focus_level }}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Efficiency -->
+                        <div
+                            style="background: linear-gradient(135deg, #FDC830 0%, #F37335 100%); padding: 15px; border-radius: 10px; color: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div style="font-size: 24px;">⚡</div>
+                            <div>
+                                <div style="font-size: 12px; opacity: 0.9;">Efficiency</div>
+                                <div style="font-size: 16px; font-weight: bold;">{{ comprehensive_plan.learning_speed }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 15px;">
+                        <!-- Timetable List -->
+                        <div
+                            style="flex: 1; min-width: 350px; background: white; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                            {% for slot in comprehensive_plan.timetable %}
+                            {% set slot_bg = '#f8f9fa' if slot.type == 'break' else 'white' %}
+                            {% set slot_border = slot.color if slot.color else '#00b0ad' %}
+                            {% set slot_text_color = '#6c757d' if slot.type == 'break' else 'var(--powerbi-blue)' %}
+                            <div
+                                style="display: flex; padding: 15px; border-bottom: 1px solid #eee; align-items: center; --slot-bg: {{ slot_bg }}; --slot-border: {{ slot_border }}; background-color: var(--slot-bg); border-left: 5px solid var(--slot-border);">
+                                <div style="width: 40px; text-align: center; margin-right: 10px;">
+                                    {% if slot.type != 'break' %}
+                                    <input type="checkbox" class="timetable-check"
+                                        data-duration="{{ slot.duration|default(30) }}"
+                                        data-activity="{{ slot.activity }}"
+                                        style="transform: scale(1.4); cursor: pointer;">
+                                    {% else %}
+                                    <span style="font-size: 18px;">☕</span>
+                                    {% endif %}
+                                </div>
+                                <div
+                                    style="width: 120px; font-weight: bold; --text-color: {{ slot_text_color }}; color: var(--text-color);">
+                                    {{ slot.time }}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: #333;">{{ slot.activity }}</div>
+                                    <div style="font-size: 13px; color: #777;">Focus: {{ slot.focus }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Daily Tracker Chart -->
+                        <div
+                            style="flex: 1; min-width: 300px; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            <h4 style="margin-top: 0; color: var(--powerbi-blue); align-self: flex-start;">Daily Mission
+                                Tracker</h4>
+                            <div style="width: 100%; height: 300px; position: relative;">
+                                <canvas id="dailyTimetableChart"></canvas>
+                            </div>
+                            <div style="margin-top: 20px; width: 100%;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-weight: 600; color: #555;">Today's Progress</span>
+                                    <span id="daily-progress-text"
+                                        style="font-weight: bold; color: var(--powerbi-blue);">0%</span>
+                                </div>
+                                <div
+                                    style="width: 100%; height: 10px; background: #eee; border-radius: 5px; overflow: hidden;">
+                                    <div id="daily-progress-bar"
+                                        style="width: 0%; height: 100%; background: linear-gradient(90deg, #00b0ad, #00d2cf); transition: width 0.3s ease;">
+                                    </div>
+                                </div>
+                            </div>
+                            <p
+                                style="font-size: 12px; color: #888; margin-top: 15px; font-style: italic; text-align: center;">
+                                "Finish each slot to reach 100% and earn your Daily Ninja XP!"
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Focus Timer Section -->
+                    <div class="timer-card"
+                        style="margin-top: 30px; margin-bottom: 30px; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(37, 117, 252, 0.2);">
+                        <h3 style="margin: 0 0 15px 0;">🍅 Deep Work Focus Timer</h3>
+                        <div id="timerDisplay"
+                            style="font-size: 48px; font-weight: 800; font-family: monospace; letter-spacing: 2px;">
+                            25:00</div>
+                        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
+                            <button onclick="startTimer()" class="timer-btn"
+                                style="padding: 10px 25px; border: none; border-radius: 25px; background: white; color: #2575fc; font-weight: bold; cursor: pointer; transition: transform 0.2s;">Start</button>
+                            <button onclick="pauseTimer()" class="timer-btn"
+                                style="padding: 10px 25px; border: none; border-radius: 25px; background: rgba(255,255,255,0.2); color: white; font-weight: bold; cursor: pointer; transition: transform 0.2s;">Pause</button>
+                            <button onclick="resetTimer()" class="timer-btn"
+                                style="padding: 10px 25px; border: none; border-radius: 25px; background: rgba(255,255,255,0.2); color: white; font-weight: bold; cursor: pointer; transition: transform 0.2s;">Reset</button>
+                        </div>
+                        <p id="timerStatus" style="margin-top: 15px; font-size: 14px; opacity: 0.9;">Ready to focus?</p>
+                    </div>
+
+                    <!-- NEW: Additional Charts Row -->
+                    <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 30px;">
+                        <!-- Activity Distribution Pie Chart -->
+                        <div
+                            style="flex: 1; min-width: 300px; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                            <h4 style="margin-top: 0; color: var(--powerbi-blue);">Activity Distribution</h4>
+                            <div style="height: 250px;">
+                                <canvas id="activityPieChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Energy Forecast Line Chart -->
+                        <div
+                            style="flex: 1; min-width: 300px; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                            <h4 style="margin-top: 0; color: var(--powerbi-blue);">Predicted Energy Flow</h4>
+                            <div style="height: 250px;">
+                                <canvas id="energyLineChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 12px; color: #888; margin-top: 10px; font-style: italic;">
+                        * Timetable automatically adjusts based on your exam proximity and category.
+                    </div>
+                </div>
+                {% endif %}
+
+                <h2
+                    style="color: var(--powerbi-blue); border-bottom: 2px solid var(--powerbi-accent); padding-bottom: 10px; margin-top: 0;">
+                    Task Breakdown (Subject-Wise)</h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding: 12px; background: var(--powerbi-blue); color: white;">
+                                Subject</th>
+                            <th style="text-align: left; padding: 12px; background: var(--powerbi-blue); color: white;">
+                                Urgency (Days
+                                Left)</th>
+                            <th style="text-align: left; padding: 12px; background: var(--powerbi-blue); color: white;">
+                                Load (Tasks)
+                            </th>
+                            <th style="text-align: left; padding: 12px; background: var(--powerbi-blue); color: white;">
+                                Recommended
+                                Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in plan %}
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 12px;"><strong>{{ item.subject }}</strong></td>
+                            <td style="padding: 12px;">{{ item.days_left }} days</td>
+                            <td style="padding: 12px;">{{ item.tasks }} pending</td>
+                            <td style="padding: 12px;"><span
+                                    style="background: var(--powerbi-accent); padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #333;">{{
+                                    item.hours }} hrs</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <p style="margin-top: 20px; text-align: center; color: #777; font-style: italic;">
+                    * Time is allocated based on difficulty, pending tasks, and urgency.
+                </p>
+
+                <!-- Weekly Progress Section -->
+                <div
+                    style="margin-top: 40px; background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <h3
+                        style="color: var(--powerbi-dark); border-left: 4px solid #28a745; padding-left: 10px; margin-top: 0;">
+                        📈
+                        Weekly Consistency Tracker</h3>
+
+                    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                        <!-- Table -->
+                        <div style="flex: 1; min-width: 300px; overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 400px;">
+                                <thead>
+                                    <tr style="background: #f8f9fa;">
+                                        <th
+                                            style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #555;">
+                                            Day</th>
+                                        <th
+                                            style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #555;">
+                                            Focus Area
+                                        </th>
+                                        <th
+                                            style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd; color: #555;">
+                                            Done?
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Monday</td>
+                                        <td>Concepts + Practice</td>
+                                        <td style="text-align: center;"><input type="checkbox" class="day-check"
+                                                data-index="0" style="transform: scale(1.5);"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tuesday</td>
+                                        <td>Practice + Backlog</td>
+                                        <td style="text-align: center;"><input type="checkbox" class="day-check"
+                                                data-index="1" style="transform: scale(1.5);"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Wednesday</td>
+                                        <td>Concepts + Revision</td>
+                                        <td style="text-align: center;"><input type="checkbox" class="day-check"
+                                                data-index="2" style="transform: scale(1.5);"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Thursday</td>
+                                        <td>Mock Test + Analysis</td>
+                                        <td style="text-align: center;"><input type="checkbox" class="day-check"
+                                                data-index="3" style="transform: scale(1.5);"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Friday</td>
+                                        <td>Project Work</td>
+                                        <td style="text-align: center;"><input type="checkbox" class="day-check"
+                                                data-index="4" style="transform: scale(1.5);"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Saturday</td>
+                                        <td>Revision + Weak Areas</td>
+                                        <td style="text-align: center;"><input type="checkbox" class="day-check"
+                                                data-index="5" style="transform: scale(1.5);"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Sunday</td>
+                                        <td>Light Study + Planning</td>
+                                        <td style="text-align: center;"><input type="checkbox" class="day-check"
+                                                data-index="6" style="transform: scale(1.5);"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div style="margin-top: 15px; font-weight: bold; color: var(--powerbi-blue);">
+                                Weekly Progress: <span id="progress-text">0%</span>
+                            </div>
+                        </div>
+
+                        <!-- Chart -->
+                        <div style="flex: 1; min-width: 300px; height: 300px;">
+                            <canvas id="progressChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Analytics Dashboard -->
+                <h3
+                    style="color: var(--powerbi-dark); border-left: 4px solid var(--powerbi-blue); padding-left: 10px; margin-top: 40px; margin-bottom: 20px;">
+                    Advanced Performance Analytics
+                </h3>
+                <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Deep dive into your study habits,
+                    consistency, and projected growth.</p>
+
+                <div class="chart-grid">
+
+                    <!-- 1. Cumulative Progress -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Cumulative Progress</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="cumulativeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 2. Daily Completion Bar -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Daily Completion Status</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="dailyBar"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 3. Consistency Score -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Consistency Score (%)</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="consistencyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 4. Performance Radar -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Performance Health Radar</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 5. Study Effort Trend -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Study Effort vs Day</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="effortChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 6. Missed vs Completed -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Missed vs Completed Trend</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="missedChart"></canvas>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        if (typeof Chart !== 'undefined') {
+                            const checkboxes = document.querySelectorAll('.day-check');
+                            const timetableChecks = document.querySelectorAll('.timetable-check');
+                            const progressText = document.getElementById('progress-text');
+                            const dailyProgressText = document.getElementById('daily-progress-text');
+                            const dailyProgressBar = document.getElementById('daily-progress-bar');
+                            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+                            // --- Daily Timetable Chart ---
+                            const ctxDailyTimetable = document.getElementById('dailyTimetableChart');
+                            let dailyTimetableChart = null;
+                            if (ctxDailyTimetable) {
+                                dailyTimetableChart = new Chart(ctxDailyTimetable.getContext('2d'), {
+                                    type: 'doughnut',
+                                    data: {
+                                        labels: ['Completed', 'Remaining'],
+                                        datasets: [{
+                                            data: [0, 100],
+                                            backgroundColor: ['#00b0ad', '#f2f2f2'],
+                                            borderWidth: 0,
+                                            hoverOffset: 4
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        cutout: '70%',
+                                        plugins: {
+                                            legend: { display: false }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // --- 0. Existing Progress Chart ---
+                            const ctxProgress = document.getElementById('progressChart');
+                            let progressChart = null;
+                            if (ctxProgress) {
+                                progressChart = new Chart(ctxProgress.getContext('2d'), {
+                                    type: 'line',
+                                    data: {
+                                        labels: days,
+                                        datasets: [{
+                                            label: 'Consistency Growth (%)',
+                                            data: [0, 0, 0, 0, 0, 0, 0],
+                                            borderColor: '#00b0ad',
+                                            backgroundColor: 'rgba(0, 176, 173, 0.1)',
+                                            borderWidth: 3,
+                                            fill: true,
+                                            tension: 0.3
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                max: 100
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // --- 1. Cumulative Progress Chart ---
+                            const ctxCumulative = document.getElementById('cumulativeChart');
+                            let cumulativeChart = null;
+                            if (ctxCumulative) {
+                                cumulativeChart = new Chart(ctxCumulative.getContext('2d'), {
+                                    type: 'line',
+                                    data: {
+                                        labels: days,
+                                        datasets: [{
+                                            label: 'Cumulative Days',
+                                            data: [0, 0, 0, 0, 0, 0, 0],
+                                            borderColor: '#00b0ad',
+                                            tension: 0.4,
+                                            fill: true,
+                                            backgroundColor: 'rgba(0, 176, 173, 0.1)'
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                max: 7,
+                                                ticks: {
+                                                    stepSize: 1
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // --- 2. Daily Completion Bar ---
+                            const ctxDaily = document.getElementById('dailyBar');
+                            let dailyBar = null;
+                            if (ctxDaily) {
+                                dailyBar = new Chart(ctxDaily.getContext('2d'), {
+                                    type: 'bar',
+                                    data: {
+                                        labels: days,
+                                        datasets: [{
+                                            label: 'Status (1=Done)',
+                                            data: [0, 0, 0, 0, 0, 0, 0],
+                                            backgroundColor: '#ffb900'
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                max: 1,
+                                                ticks: {
+                                                    stepSize: 1
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // --- 3. Missed Trend ---
+                            const ctxMissed = document.getElementById('missedChart');
+                            let missedChart = null;
+                            if (ctxMissed) {
+                                missedChart = new Chart(ctxMissed.getContext('2d'), {
+                                    type: 'line',
+                                    data: {
+                                        labels: days,
+                                        datasets: [
+                                            {
+                                                label: 'Completed',
+                                                data: [0, 0, 0, 0, 0, 0, 0],
+                                                borderColor: '#00b0ad',
+                                                tension: 0.1
+                                            },
+                                            {
+                                                label: 'Missed',
+                                                data: [0, 0, 0, 0, 0, 0, 0],
+                                                borderColor: '#2b2b2b',
+                                                tension: 0.1
+                                            }
+                                        ]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                max: 1,
+                                                ticks: {
+                                                    stepSize: 1
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // --- 4. Consistency Chart ---
+                            const ctxConsistency = document.getElementById('consistencyChart');
+                            let consistencyChart = null;
+                            if (ctxConsistency) {
+                                consistencyChart = new Chart(ctxConsistency.getContext('2d'), {
+                                    type: 'line',
+                                    data: {
+                                        labels: days,
+                                        datasets: [{
+                                            label: 'Consistency %',
+                                            data: [0, 0, 0, 0, 0, 0, 0],
+                                            borderColor: '#ffb900',
+                                            tension: 0.3,
+                                            fill: true,
+                                            backgroundColor: 'rgba(255, 185, 0, 0.2)'
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                max: 100
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // --- 5. Effort Chart (Simulated based on Daily Hours) ---
+                            const dailyHours = parseFloat("{{ daily_hours }}") || 4;
+                            const effortData = [dailyHours, dailyHours, dailyHours, dailyHours + 1, dailyHours + 1, dailyHours - 1, dailyHours - 2].map(h => Math.max(0.5, h));
+
+                            const ctxEffort = document.getElementById('effortChart');
+                            if (ctxEffort) {
+                                new Chart(ctxEffort.getContext('2d'), {
+                                    type: 'bar',
+                                    data: {
+                                        labels: days,
+                                        datasets: [{
+                                            label: 'Planned Hours',
+                                            data: effortData,
+                                            backgroundColor: '#00b0ad'
+                                        }]
+                                    },
+                                    options: { responsive: true, maintainAspectRatio: false }
+                                });
+                            }
+
+                            // --- 6. Radar Chart (Static Health) ---
+                            // Use safe defaults for template variables
+                            const focusScore = window.comprehensive_plan ? (window.comprehensive_plan.focus_score || 0) : 0;
+                            const riskScore = window.comprehensive_plan ? (window.comprehensive_plan.risk_score || 0) : 0;
+
+                            const ctxRadar = document.getElementById('radarChart');
+                            if (ctxRadar) {
+                                new Chart(ctxRadar.getContext('2d'), {
+                                    type: 'radar',
+                                    data: {
+                                        labels: ['Consistency', 'Focus', 'Practice', 'Revision', 'Backlog Mgmt'],
+                                        datasets: [{
+                                            label: 'Current Stats',
+                                            data: [
+                                                Math.min(100, focusScore * 5),
+                                                Math.min(100, focusScore * 4),
+                                                75,
+                                                80,
+                                                Math.max(0, 100 - riskScore)
+                                            ],
+                                            fill: true,
+                                            backgroundColor: 'rgba(255, 185, 0, 0.2)',
+                                            borderColor: '#ffb900',
+                                            pointBackgroundColor: '#ffb900',
+                                            pointBorderColor: '#fff',
+                                            pointHoverBackgroundColor: '#fff',
+                                            pointHoverBorderColor: '#ffb900'
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            r: { min: 0, max: 100 }
+                                        }
+                                    }
+                                });
+                            }
+
+
+
+                            // --- UPDATE FUNCTION ---
+
+
+                            // DARK MODE & RESOURCES LOGIC
+                            try {
+                                // 1. Dark Mode
+                                const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
+                                if (toggleSwitch) {
+                                    const currentTheme = localStorage.getItem('theme');
+                                    if (currentTheme) {
+                                        document.body.classList.add(currentTheme);
+                                        if (currentTheme === 'dark-mode') toggleSwitch.checked = true;
+                                    }
+                                    toggleSwitch.addEventListener('change', function (e) {
+                                        if (e.target.checked) {
+                                            document.body.classList.add('dark-mode');
+                                            localStorage.setItem('theme', 'dark-mode');
+                                        } else {
+                                            document.body.classList.remove('dark-mode');
+                                            localStorage.setItem('theme', 'light-mode');
+                                        }
+                                    });
+                                }
+
+                                // 2. Smart Resources
+                                const subjectsData = JSON.parse('{{ preserved_data | tojson | safe | replace("\'", "\\\'") }}');
+                                if (subjectsData && subjectsData.length > 0) {
+                                    const resourceMap = {
+                                        'math': { name: 'Khan Academy (Math)', url: 'https://www.khanacademy.org/math' },
+                                        'calculus': { name: 'Paul\'s Online Math Notes', url: 'https://tutorial.math.lamar.edu/' },
+                                        'physics': { name: 'HyperPhysics', url: 'http://hyperphysics.phy-astr.gsu.edu/hbase/hframe.html' },
+                                        'chem': { name: 'ChemGuide', url: 'https://www.chemguide.co.uk/' },
+                                        'program': { name: 'GeeksForGeeks', url: 'https://www.geeksforgeeks.org/' },
+                                        'code': { name: 'FreeCodeCamp', url: 'https://www.freecodecamp.org/' },
+                                        'java': { name: 'Oracle Java Docs', url: 'https://docs.oracle.com/en/java/' },
+                                        'python': { name: 'Real Python', url: 'https://realpython.com/' },
+                                        'history': { name: 'CrashCourse History', url: 'https://www.youtube.com/user/crashcourse' },
+                                        'bio': { name: 'Biology Corner', url: 'https://www.biologycorner.com/' },
+                                        'english': { name: 'Purdue OWL', url: 'https://owl.purdue.edu/' },
+                                        'economics': { name: 'Investopedia', url: 'https://www.investopedia.com/' }
+                                    };
+
+                                    const listEl = document.getElementById('resourceList');
+                                    const cardEl = document.getElementById('smartResourcesCard');
+                                    let hasMatch = false;
+
+                                    subjectsData.forEach(sub => {
+                                        const sName = (sub.subject || "").toLowerCase();
+                                        // Check for keywords
+                                        for (const [key, res] of Object.entries(resourceMap)) {
+                                            if (sName.includes(key)) {
+                                                const li = document.createElement('li');
+                                                li.innerHTML = `<strong>${sub.subject}:</strong> <a href="${res.url}" target="_blank" style="color:var(--powerbi-blue); text-decoration: underline;">${res.name}</a>`;
+                                                listEl.appendChild(li);
+                                                hasMatch = true;
+                                            }
+                                        }
+                                    });
+
+                                    // Generic backup if no match but subjects exist
+                                    if (!hasMatch && subjectsData.length > 0) {
+                                        const li = document.createElement('li');
+                                        li.innerHTML = `Explore <strong>Coursera</strong> or <strong>EdX</strong> for these specific topics.`;
+                                        listEl.appendChild(li);
+                                        hasMatch = true;
+                                    }
+
+                                    if (hasMatch && cardEl) cardEl.style.display = 'block';
+                                }
+
+                            } catch (e) { console.error("Enhancement Error:", e); }
+
+                            // --- GLOBAL VARS & HELPERS ---
+                            let activityChart;
+                            let energyChart;
+                            // Data Injection (Safe parsing) moved to global scope for updateCharts
+                            const rawTimetable = JSON.parse('{{ comprehensive_plan.timetable | tojson | safe | replace("\'", "\\\'") }}');
+                            const energyPeak = "{{ comprehensive_plan.energy_peak }}";
+
+                            function getActivityType(act) {
+                                act = act || "";
+                                if (act.includes('Concept') || act.includes('New Material') || act.includes('Syllabus')) return 'Concept Learning';
+                                if (act.includes('Practice') || act.includes('Questions') || act.includes('Drill') || act.includes('Paper')) return 'Practice & Problems';
+                                if (act.includes('Revision') || act.includes('Review') || act.includes('Notes') || act.includes('Backlog')) return 'Revision & Backlog';
+                                if (act.includes('Mock') || act.includes('Test') || act.includes('Exam')) return 'Mock Testing';
+                                if (act.includes('Project') || act.includes('Creative')) return 'Project Work';
+                                return 'Study & Focus';
+                            }
+
+                            // --- UPDATE FUNCTION ---
+                            function updateCharts() {
+                                let completedCount = 0;
+                                const progressData = [];
+                                const cumulativeData = [];
+                                const dailyData = [];
+                                const missedData = [];
+                                const consistencyData = [];
+
+                                checkboxes.forEach((box, index) => {
+                                    const isDone = box.checked ? 1 : 0;
+                                    if (isDone) completedCount++;
+
+                                    progressData.push((completedCount / 7) * 100);
+                                    cumulativeData.push(completedCount);
+                                    dailyData.push(isDone);
+                                    missedData.push(isDone ? 0 : 1);
+                                    consistencyData.push((completedCount / (index + 1)) * 100);
+                                });
+
+                                // Update Charts if they exist
+                                if (progressChart) {
+                                    progressChart.data.datasets[0].data = progressData;
+                                    progressChart.update();
+                                }
+
+                                if (cumulativeChart) {
+                                    cumulativeChart.data.datasets[0].data = cumulativeData;
+                                    cumulativeChart.update();
+                                }
+
+                                if (dailyBar) {
+                                    dailyBar.data.datasets[0].data = dailyData;
+                                    dailyBar.update();
+                                }
+
+                                if (missedChart) {
+                                    missedChart.data.datasets[0].data = dailyData;
+                                    missedChart.data.datasets[1].data = missedData;
+                                    missedChart.update();
+                                }
+
+                                if (consistencyChart) {
+                                    consistencyChart.data.datasets[0].data = consistencyData;
+                                    consistencyChart.update();
+                                }
+
+                                // Text Update
+                                let totalPct = (completedCount / 7) * 100;
+                                if (progressText) progressText.innerText = Math.round(totalPct) + "%";
+                            }
+
+                            function updateDailyChart() {
+                                if (!timetableChecks.length) return;
+                                let completed = 0;
+                                let totalCompletedMins = 0;
+                                const completedByType = {};
+
+                                timetableChecks.forEach(box => {
+                                    if (box.checked) {
+                                        completed++;
+                                        const dur = parseFloat(box.getAttribute('data-duration') || 0);
+                                        totalCompletedMins += dur;
+
+                                        // Track category completion
+                                        const act = box.getAttribute('data-activity') || "";
+                                        const type = getActivityType(act);
+                                        completedByType[type] = (completedByType[type] || 0) + dur;
+                                    }
+                                });
+
+                                // Update Completed Time Metric
+                                const completedHrs = (totalCompletedMins / 60).toFixed(1);
+                                const completeTimeEl = document.getElementById('dynamicCompletedTime');
+                                if (completeTimeEl) completeTimeEl.innerText = completedHrs;
+
+                                const total = timetableChecks.length;
+                                const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+                                if (dailyProgressText) dailyProgressText.innerText = pct + "%";
+                                if (dailyProgressBar) dailyProgressBar.style.width = pct + "%";
+
+                                if (dailyTimetableChart) {
+                                    dailyTimetableChart.data.datasets[0].data = [pct, 100 - pct];
+                                    dailyTimetableChart.update();
+                                }
+
+                                // Update Live Activity Bar Chart
+                                if (activityChart) {
+                                    const labels = activityChart.data.labels;
+                                    const newData = labels.map(lbl => completedByType[lbl] || 0);
+                                    activityChart.data.datasets[1].data = newData;
+                                    activityChart.update();
+                                }
+
+                                // Update Live Energy Chart
+                                if (energyChart && rawTimetable && rawTimetable.length) {
+                                    const predictedData = energyChart.data.datasets[0].data;
+                                    let checkboxIndex = 0;
+
+                                    // Map over the full timetable slots (including breaks)
+                                    const realizedData = rawTimetable.map((slot, index) => {
+                                        if (slot.type === 'break') {
+                                            return null;
+                                        } else {
+                                            const box = timetableChecks[checkboxIndex];
+                                            checkboxIndex++;
+                                            if (box && box.checked) {
+                                                return predictedData[index];
+                                            }
+                                            return null;
+                                        }
+                                    });
+
+                                    energyChart.data.datasets[1].data = realizedData;
+                                    energyChart.update();
+                                }
+                            }
+
+                            // Event Listeners
+                            if (checkboxes.length) {
+                                checkboxes.forEach(box => {
+                                    box.addEventListener('change', updateCharts);
+                                });
+                            }
+
+                            if (timetableChecks.length) {
+                                timetableChecks.forEach(box => {
+                                    box.addEventListener('change', updateDailyChart);
+                                });
+                                updateDailyChart();
+                            }
+
+                            // --- NEW: Activity & Energy Charts Logic ---
+                            // rawTimetable & energyPeak moved to Global Helpers
+
+                            if (rawTimetable && rawTimetable.length) {
+                                // 1. Prepare Activity Data
+                                const activityCounts = {};
+                                rawTimetable.forEach(slot => {
+                                    if (slot.type === 'break') {
+                                        activityCounts['Break'] = (activityCounts['Break'] || 0) + (slot.duration || 10);
+                                    } else {
+                                        const type = getActivityType(slot.activity);
+                                        activityCounts[type] = (activityCounts[type] || 0) + (slot.duration || 30);
+                                    }
+                                });
+
+                                // 2. Render Activity Bar Chart (Live Changer)
+                                const ctxActivity = document.getElementById('activityPieChart');
+                                if (ctxActivity) {
+                                    activityChart = new Chart(ctxActivity.getContext('2d'), {
+                                        type: 'bar',
+                                        data: {
+                                            labels: Object.keys(activityCounts),
+                                            datasets: [
+                                                {
+                                                    label: 'Planned',
+                                                    data: Object.values(activityCounts),
+                                                    backgroundColor: '#e9ecef',
+                                                    borderRadius: 4,
+                                                    barPercentage: 0.6
+                                                },
+                                                {
+                                                    label: 'Completed',
+                                                    data: Object.keys(activityCounts).map(() => 0),
+                                                    backgroundColor: ['#00b0ad', '#ffb900', '#ff5e62', '#6a11cb', '#28a745', '#17a2b8'], // Cycle colors
+                                                    borderRadius: 4,
+                                                    barPercentage: 0.6
+                                                }
+                                            ]
+                                        },
+                                        options: {
+                                            indexAxis: 'y', // Horizontal bars
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            scales: {
+                                                x: {
+                                                    stacked: false,
+                                                    beginAtZero: true,
+                                                    grid: { display: false }
+                                                },
+                                                y: {
+                                                    stacked: false,
+                                                    grid: { display: false }
+                                                }
+                                            },
+                                            plugins: {
+                                                legend: { position: 'top' },
+                                                tooltip: {
+                                                    callbacks: {
+                                                        label: function (context) {
+                                                            return context.dataset.label + ': ' + context.parsed.x + ' mins';
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+
+                                // 3. Prepare Energy Data
+                                // Simulate curve based on peak
+                                const labels = rawTimetable.map(s => s.time.split(' - ')[0]); // Start times
+                                const energyData = rawTimetable.map((slot, i) => {
+                                    // Base curve logic
+                                    let base = 70;
+                                    const progress = i / rawTimetable.length;
+
+                                    if (energyPeak === 'Morning') {
+                                        base = 90 - (progress * 40); // 90 -> 50
+                                    } else if (energyPeak === 'Evening') {
+                                        // Low start, high middle, taper end
+                                        base = 60 + (Math.sin(progress * Math.PI) * 35);
+                                    } else { // Night
+                                        base = 50 + (progress * 45); // 50 -> 95
+                                    }
+
+                                    // Breaks restore energy
+                                    if (slot.type === 'break') base += 10;
+
+                                    return Math.min(100, Math.max(20, base));
+                                });
+
+                                // 4. Render Energy Line Chart
+                                const ctxEnergy = document.getElementById('energyLineChart');
+                                if (ctxEnergy) {
+                                    energyChart = new Chart(ctxEnergy.getContext('2d'), {
+                                        type: 'line',
+                                        data: {
+                                            labels: labels,
+                                            datasets: [{
+                                                label: 'Predicted Focus',
+                                                data: energyData,
+                                                borderColor: '#e9ecef',
+                                                backgroundColor: 'transparent',
+                                                borderDash: [5, 5],
+                                                fill: false,
+                                                tension: 0.4,
+                                                pointRadius: 0
+                                            }, {
+                                                label: 'Realized Focus',
+                                                data: rawTimetable.map(() => null), // Start empty
+                                                borderColor: '#ff5e62',
+                                                backgroundColor: 'rgba(255, 94, 98, 0.2)',
+                                                fill: true,
+                                                tension: 0.4
+                                            }]
+                                        },
+                                        options: {
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            scales: {
+                                                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Energy %' } }
+                                            },
+                                            plugins: {
+                                                tooltip: {
+                                                    callbacks: {
+                                                        label: function (context) {
+                                                            return context.dataset.label + ': ' + context.parsed.y + '%';
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    });
+                </script>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Set values from URL parameters or use template values
+        document.getElementById("studentName").textContent =
+            urlParams.get("student_name") || "{{ student_name }}";
+        document.getElementById("predictedCGPA").textContent =
+            urlParams.get("cgpa") || "{{ predicted_cgpa }}";
+        document.getElementById("attendanceKPI").textContent =
+            (urlParams.get("attendance") || "{{ attendance }}") + "%";
+        document.getElementById("studyHoursKPI").textContent =
+            urlParams.get("study_hours") || "{{ study_hours }}";
+        document.getElementById("projectsKPI").textContent =
+            urlParams.get("projects_completed") || "{{ projects_completed }}";
+        document.getElementById("backlogsKPI").textContent =
+            urlParams.get("backlogs") || "{{ backlogs }}";
+
+        // Update change indicators if parameters exist
+        if (urlParams.has("attendance_change")) {
+            document.querySelector("#attendanceKPI + .kpi-change").textContent =
+                urlParams.get("attendance_change");
+        }
+        if (urlParams.has("study_hours_change")) {
+            document.querySelector("#studyHoursKPI + .kpi-change").textContent =
+                urlParams.get("study_hours_change");
+        }
+        if (urlParams.has("projects_change")) {
+            document.querySelector("#projectsKPI + .kpi-change").textContent =
+                urlParams.get("projects_change");
+        }
+        if (urlParams.has("backlogs")) {
+            const backlogs = parseInt(urlParams.get("backlogs"));
+            const backlogElement = document.querySelector(
+                "#backlogsKPI + .kpi-change"
+            );
+            backlogElement.textContent =
+                backlogs === 0
+                    ? "No pending backlogs"
+                    : backlogs + " pending backlogs";
+            backlogElement.style.color = backlogs === 0 ? "#4CAF50" : "red";
+        }
+
+        // Initialize charts
+        // Initialize charts
+        const trendChart = echarts.init(document.getElementById("trendChart"));
+
+        // Make charts responsive
+        window.addEventListener('resize', function () {
+            trendChart.resize();
+            distributionChart.resize();
+            // Add other echarts instances if any
+            if (typeof benchmarkChart !== 'undefined') benchmarkChart.resize();
+            if (typeof correlationChart !== 'undefined') correlationChart.resize();
+        });
+        trendChart.setOption({
+            title: {
+                text: "Academic Performance Trend",
+                left: "center",
+                textStyle: {
+                    fontSize: 14,
+                    fontWeight: "normal",
+                    color: "#2b2b2b",
+                },
+            },
+            tooltip: {
+                trigger: "axis",
+                formatter: function (params) {
+                    let result = params[0].axisValue + "<br/>";
+                    params.forEach((param) => {
+                        const value = param.value.toFixed(2);
+                        const diff =
+                            param.seriesName === "Your GPA"
+                                ? (param.value - classAverage[params[0].dataIndex]).toFixed(2)
+                                : "";
+                        result += `${param.marker} ${param.seriesName}: <strong>${value}</strong>`;
+                        if (diff !== "") {
+                            result += ` (${diff > 0 ? "+" : ""}${diff})`;
+                        }
+                        result += "<br/>";
+                    });
+                    return result;
+                },
+            },
+            legend: {
+                data: ["Your GPA", "Class Avg"],
+                bottom: 0,
+            },
+            grid: {
+                left: "3%",
+                right: "4%",
+                bottom: "15%",
+                top: "15%",
+                containLabel: true,
+            },
+            xAxis: {
+                type: "category",
+                data: ["Sem 1", "Sem 2", "Predicted"],
+                axisLabel: {
+                    interval: 0,
+                    fontSize: 12,
+                },
+            },
+            yAxis: {
+                type: "value",
+                min: 6,
+                max: 10,
+                axisLabel: {
+                    formatter: "{value}",
+                },
+                splitLine: {
+                    lineStyle: {
+                        type: "dashed",
+                    },
+                },
+            },
+            series: [
+                {
+                    name: "Your GPA",
+                    type: "line",
+                    smooth: true,
+                    symbol: "circle",
+                    symbolSize: 8,
+                    lineStyle: {
+                        width: 3,
+                    },
+                    data: [
+                        parseFloat(urlParams.get("sem1_gpa")) ||
+                        parseFloat("{{ sem1_gpa }}") ||
+                        0,
+                        parseFloat(urlParams.get("sem2_gpa")) ||
+                        parseFloat("{{ sem2_gpa }}") ||
+                        0,
+                        parseFloat(urlParams.get("cgpa")) ||
+                        parseFloat("{{ predicted_cgpa }}") ||
+                        0,
+                    ],
+                    itemStyle: {
+                        color: "#00B0AD",
+                        borderColor: "#fff",
+                        borderWidth: 2,
+                    },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: "rgba(0, 176, 173, 0.3)" },
+                            { offset: 1, color: "rgba(0, 176, 173, 0.1)" },
+                        ]),
+                    },
+                    label: {
+                        show: true,
+                        formatter: "{c}",
+                        position: "top",
+                    },
+                    markPoint: {
+                        data: [
+                            { type: "max", name: "Highest" },
+                            { type: "min", name: "Lowest" },
+                        ],
+                    },
+                },
+                {
+                    name: "Class Avg",
+                    type: "line",
+                    smooth: true,
+                    symbol: "diamond",
+                    symbolSize: 8,
+                    lineStyle: {
+                        width: 2,
+                        type: "dashed",
+                    },
+                    data: [7.8, 8.1, 8.3],
+                    itemStyle: {
+                        color: "#FFB900",
+                        borderColor: "#fff",
+                        borderWidth: 2,
+                    },
+                },
+            ],
+        });
+
+        // Class average data reference for tooltip calculations
+        const classAverage = [7.8, 8.1, 8.3];
+        const distributionChart = echarts.init(
+            document.getElementById("distributionChart")
+        );
+        distributionChart.setOption({
+            tooltip: {
+                trigger: "item",
+                formatter: "{a} <br/>{b}: {c} ({d}%)",
+            },
+            legend: {
+                orient: "vertical",
+                right: 10,
+                top: "center",
+                data: [
+                    "Sem 1 GPA",
+                    "Sem 2 GPA",
+                    "Participation",
+                    "Attendance",
+                    "Study Hours",
+                ],
+            },
+            series: [
+                {
+                    name: "Performance Distribution",
+                    type: "pie",
+                    radius: ["30%", "70%"],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 5,
+                        borderColor: "#fff",
+                        borderWidth: 2,
+                    },
+                    label: {
+                        show: true,
+                        formatter: "{b}: {c}",
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: "16",
+                            fontWeight: "bold",
+                        },
+                    },
+                    labelLine: {
+                        show: true,
+                    },
+                    data: [
+                        {
+                            value:
+                                parseFloat(urlParams.get("sem1_gpa")) ||
+                                parseFloat("{{ sem1_gpa }}") ||
+                                0,
+                            name: "Sem 1 GPA",
+                            itemStyle: { color: "#00B0AD" },
+                        },
+                        {
+                            value:
+                                parseFloat(urlParams.get("sem2_gpa")) ||
+                                parseFloat("{{ sem2_gpa }}") ||
+                                0,
+                            name: "Sem 2 GPA",
+                            itemStyle: { color: "#007D79" },
+                        },
+                        {
+                            value:
+                                parseFloat(urlParams.get("participation_score")) ||
+                                parseFloat("{{ participation_score }}") ||
+                                0,
+                            name: "Participation",
+                            itemStyle: { color: "#FFB900" },
+                        },
+                        {
+                            value:
+                                parseFloat(urlParams.get("attendance")) ||
+                                parseFloat("{{ attendance }}") ||
+                                0,
+                            name: "Attendance",
+                            itemStyle: { color: "#E74C3C" },
+                        },
+                        {
+                            value:
+                                parseFloat(urlParams.get("study_hours")) ||
+                                parseFloat("{{ study_hours }}") ||
+                                0,
+                            name: "Study Hours",
+                            itemStyle: { color: "#9B59B6" },
+                        },
+                    ],
+                },
+            ],
+        });
+
+        // Handle window resize
+        window.addEventListener("resize", function () {
+            distributionChart.resize();
+        });
+
+        const benchmarkChart = echarts.init(
+            document.getElementById("benchmarkChart")
+        );
+        benchmarkChart.setOption({
+            tooltip: {
+                trigger: "axis",
+                formatter: function (params) {
+                    let result = params[0].name + "<br/>";
+                    params.forEach((param) => {
+                        const value = param.value.toFixed(2);
+                        result += `${param.marker} ${param.seriesName}: <strong>${value}</strong><br/>`;
+                    });
+                    return result;
+                },
+            },
+            legend: {
+                data: ["Your Score", "Benchmark"],
+                textStyle: {
+                    fontSize: 12,
+                },
+            },
+            grid: {
+                left: "3%",
+                right: "4%",
+                bottom: "3%",
+                containLabel: true,
+            },
+            xAxis: {
+                type: "category",
+                data: [
+                    "Sem 1 GPA",
+                    "Sem 2 GPA",
+                    "Participation",
+                    "Attendance",
+                    "Study Hours",
+                ],
+                axisLabel: {
+                    interval: 0,
+                    rotate: 0,
+                    fontSize: 11,
+                },
+            },
+            yAxis: {
+                type: "value",
+                min: function (value) {
+                    return Math.max(0, value.min - 1);
+                },
+                axisLabel: {
+                    formatter: "{value}",
+                },
+            },
+            series: [
+                {
+                    name: "Your Score",
+                    type: "bar",
+                    barWidth: "40%",
+                    data: [
+                        parseFloat(urlParams.get("sem1_gpa")) ||
+                        parseFloat("{{ sem1_gpa }}") ||
+                        0,
+                        parseFloat(urlParams.get("sem2_gpa")) ||
+                        parseFloat("{{ sem2_gpa }}") ||
+                        0,
+                        parseFloat(urlParams.get("participation_score")) ||
+                        parseFloat("{{ participation_score }}") ||
+                        0,
+                        parseFloat(urlParams.get("attendance")) ||
+                        parseFloat("{{ attendance }}") ||
+                        0,
+                        parseFloat(urlParams.get("study_hours")) ||
+                        parseFloat("{{ study_hours }}") ||
+                        0,
+                    ],
+                    itemStyle: {
+                        color: "#00B0AD",
+                        borderRadius: [4, 4, 0, 0],
+                    },
+                    label: {
+                        show: true,
+                        position: "top",
+                        formatter: "{c}",
+                        fontSize: 11,
+                    },
+                },
+                {
+                    name: "Benchmark",
+                    type: "bar",
+                    barWidth: "40%",
+                    data: [
+                        8.0, // Sem 1 GPA benchmark
+                        8.0, // Sem 2 GPA benchmark
+                        3.5, // Participation benchmark
+                        75, // Attendance benchmark
+                        12, // Study Hours benchmark
+                    ],
+                    itemStyle: {
+                        color: "#FFB900",
+                        borderRadius: [4, 4, 0, 0],
+                    },
+                    label: {
+                        show: true,
+                        position: "top",
+                        formatter: "{c}",
+                        fontSize: 11,
+                    },
+                },
+            ],
+        });
+
+        // Handle window resize for all charts
+        const handleResize = () => {
+            trendChart.resize();
+            distributionChart.resize();
+            benchmarkChart.resize();
+            correlationChart.resize();
+        };
+        window.addEventListener("resize", handleResize);
+
+        const correlationChart = echarts.init(
+            document.getElementById("correlationChart")
+        );
+        correlationChart.setOption({
+            tooltip: {
+                trigger: "axis",
+                formatter: "Study Hours: {b0}<br/>Average CGPA: <b>{c0}</b>",
+                axisPointer: {
+                    type: "shadow",
+                },
+            },
+            title: {
+                text: "Study Hours vs CGPA Correlation",
+                left: "center",
+                textStyle: {
+                    fontSize: 14,
+                    fontWeight: "normal",
+                },
+            },
+            grid: {
+                left: "3%",
+                right: "4%",
+                bottom: "3%",
+                containLabel: true,
+            },
+            xAxis: {
+                type: "category",
+                name: "Study Hours/Week",
+                nameLocation: "middle",
+                nameGap: 25,
+                data: ["<5", "5-10", "10-15", "15-20", "20+"],
+                axisLabel: {
+                    interval: 0,
+                },
+            },
+            yAxis: {
+                type: "value",
+                name: "CGPA",
+                min: 6,
+                max: 9,
+                axisLine: {
+                    show: true,
+                },
+                splitLine: {
+                    show: true,
+                    lineStyle: {
+                        type: "dashed",
+                    },
+                },
+            },
+            series: [
+                {
+                    name: "Hours vs CGPA",
+                    type: "line",
+                    smooth: true,
+                    symbol: "circle",
+                    symbolSize: 8,
+                    lineStyle: {
+                        width: 3,
+                    },
+                    data: [6.8, 7.2, 7.9, 8.4, 8.7],
+                    itemStyle: {
+                        color: "#00B0AD",
+                        borderColor: "#fff",
+                        borderWidth: 2,
+                    },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: "rgba(0, 176, 173, 0.3)" },
+                            { offset: 1, color: "rgba(0, 176, 173, 0.1)" },
+                        ]),
+                    },
+                    markPoint: {
+                        data: [
+                            { type: "max", name: "Max" },
+                            { type: "min", name: "Min" },
+                        ],
+                        symbolSize: 50,
+                        label: {
+                            formatter: "{c}",
+                            color: "#fff",
+                        },
+                    },
+                    label: {
+                        show: true,
+                        formatter: "{c}",
+                        position: "top",
+                    },
+                },
+            ],
+        });
+
+        // Auto-scroll to plan result if present
+        document.addEventListener("DOMContentLoaded", function () {
+            if (document.querySelector('.plan-result')) {
+                document.querySelector('.plan-result').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            // Dark Mode Logic
+            const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
+            const currentTheme = localStorage.getItem('theme');
+
+            if (currentTheme) {
+                document.body.classList.add(currentTheme);
+                if (currentTheme === 'dark-mode') {
+                    toggleSwitch.checked = true;
+                }
+            }
+
+            function switchTheme(e) {
+                if (e.target.checked) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light-mode');
+                }
+            }
+            toggleSwitch.addEventListener('change', switchTheme, false);
+
+            // News Ticker Logic
+            function initNewsTicker() {
+                const feed = document.getElementById('newsFeed');
+                if (!feed) return;
+
+                const newsItems = [
+                    { type: 'Info', text: 'Exam Schedule for Sem 5 released! Check portal.', color: '#00b0ad' },
+                    { type: 'Tip', text: 'Start revising "Data Structures" early.', color: '#ffb900' },
+                    { type: 'Event', text: 'Campus Fest "Technova" registration opens tomorrow!', color: '#6a11cb' },
+                    { type: 'Alert', text: 'Library closed for renovation this weekend.', color: '#ff5e62' }
+                ];
+
+                let index = 0;
+
+                function showNext() {
+                    const item = newsItems[index];
+                    // Use fade transition
+                    const current = feed.querySelector('.news-item');
+                    if (current) {
+                        current.classList.remove('active');
+                        current.classList.add('exit');
+                    }
+
+                    setTimeout(() => {
+                        feed.innerHTML = `
+            <div class="news-item active">
+               <span class="news-badge" style="color:${item.color}; background:${item.color}22">${item.type}</span>
+               ${item.text}
+            </div>
+          `;
+                    }, 500); // Wait for exit animation
+
+                    index = (index + 1) % newsItems.length;
+                }
+
+                // Initial show
+                setTimeout(showNext, 100);
+                setInterval(showNext, 5000);
+            }
+            initNewsTicker();
+        });
+
+        function addSubject() {
+            const container = document.getElementById('subjects-container');
+            const row = document.createElement('div');
+            row.className = 'subject-row';
+            row.style.cssText = 'display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 0.5fr; gap: 10px; margin-bottom: 10px; align-items: end;';
+            row.innerHTML = `
+            <div>
+                <input type="text" name="subject_name" placeholder="Name" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div>
+                <input type="number" name="difficulty" min="1" max="10" value="5" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div>
+                <input type="number" name="tasks" min="1" value="1" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div>
+                <input type="date" name="exam_date" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div>
+                <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: var(--powerbi-accent); color: var(--powerbi-dark); border: none; padding: 8px; border-radius: 4px; cursor: pointer;">X</button>
+            </div>
+        `;
+            container.appendChild(row);
+        }
+
+        // Focus Timer Logic (Global Scope)
+        let timerInterval;
+        let timeLeft = 25 * 60;
+        let isRunning = false;
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const display = document.getElementById('timerDisplay');
+            if (display) {
+                display.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            isRunning = true;
+            const status = document.getElementById('timerStatus');
+            if (status) status.innerText = "🔥 Focus Mode ON! Keep going.";
+
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    if (status) status.innerText = "🎉 Session Complete! Take a break.";
+                    // alert("Focus session complete!"); // Optional
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            const status = document.getElementById('timerStatus');
+            if (status) status.innerText = "⏸️ Paused";
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            timeLeft = 25 * 60;
+            updateTimerDisplay();
+            const status = document.getElementById('timerStatus');
+            if (status) status.innerText = "Ready to focus?";
+        }
+    </script>
+</body>
+
+</html>

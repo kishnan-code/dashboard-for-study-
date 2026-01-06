@@ -1,0 +1,5 @@
+Timestamp,Student_Name,Gender,Age,Attendance (%),HighSchool_GPA,Internal_Assessments (%),Participation_Score,Projects_Completed,Study_Hours_Per_Week,Backlogs,Sem_1_GPA,Sem_2_GPA,Predicted_CGPA
+2026-01-02 18:31:03,kishan ,Male,18,56,65,15,3,3,12,0,7,7.5,7.4
+2026-01-02 18:33:30,kishan ,Male,18,56,65,15,3,3,12,0,7,7.5,7.4
+2026-01-02 18:34:21,kishan ,Male,18,65,56,15,4,4,12,1,7.1,7,7.09
+2026-01-02 18:35:32,kishan ,Male,18,65,56,15,4,4,12,1,7.1,7,7.09

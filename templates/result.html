@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CGPA Prediction Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --powerbi-blue: #00b0ad;
+      --powerbi-dark: #2b2b2b;
+      --powerbi-light: #f2f2f2;
+      --powerbi-accent: #ffb900;
+      /* New Theme Variables */
+      --bg-color: #f2f2f2;
+      --card-bg: #ffffff;
+      --text-color: #2b2b2b;
+      --border-color: #dddddd;
+    }
+
+    body.dark-mode {
+      --bg-color: #1a1a1a;
+      --card-bg: #2d2d2d;
+      --text-color: #e0e0e0;
+      --border-color: #404040;
+      --powerbi-light: #1a1a1a;
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .view-history-btn {
+      background-color: var(--powerbi-blue);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 176, 173, 0.3);
+      transition: all 0.3s ease;
+      display: inline-block;
+      text-align: center;
+      cursor: pointer;
+      margin: 20px 0;
+    }
+
+    .view-history-btn:hover {
+      background-color: #008a87;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 176, 173, 0.4);
+    }
+
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--powerbi-blue);
+    }
+
+    .header-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--powerbi-blue);
+    }
+
+    .header-subtitle {
+      font-size: 16px;
+      color: #666;
+    }
+
+    .kpi-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-top: 4px solid var(--powerbi-blue);
+      color: var(--text-color);
+    }
+
+    .kpi-title {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--powerbi-dark);
+    }
+
+    .kpi-change {
+      font-size: 12px;
+      color: #4caf50;
+      margin-top: 5px;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .chart-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .chart-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--powerbi-dark);
+    }
+
+    .chart-container {
+      height: 300px;
+      width: 100%;
+    }
+
+    .table-container {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: var(--powerbi-blue);
+      color: white;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+
+    .prediction-highlight {
+      background-color: rgba(0, 176, 173, 0.1);
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 30px;
+      border: 1px solid rgba(0, 176, 173, 0.2);
+    }
+
+    .prediction-label {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .prediction-value {
+      font-size: 48px;
+      font-weight: 600;
+      color: #00b0ad;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .prediction-status {
+      font-size: 16px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .prediction-status.excellent {
+      background-color: rgba(46, 204, 113, 0.2);
+      color: #27ae60;
+    }
+
+    .prediction-status.good {
+      background-color: rgba(241, 196, 15, 0.2);
+      color: #f39c12;
+    }
+
+    .prediction-status.improve {
+      background-color: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+    }
+
+    .prediction-message {
+      color: #666;
+      font-size: 16px;
+      margin-top: 15px;
+    }
+
+    .performance-breakdown {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .breakdown-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 5px 12px;
+      border-radius: 20px;
+    }
+
+    .trend-icon,
+    .attendance-icon,
+    .study-icon {
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .prediction-value {
+        font-size: 36px;
+        flex-direction: column;
+      }
+
+      .performance-breakdown {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    .recommendations {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .recommendation-item {
+      margin-bottom: 15px;
+      padding-left: 20px;
+      border-left: 3px solid var(--powerbi-blue);
+    }
+
+    /* Planner Classes */
+    .planner-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .subject-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 0.5fr;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: end;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #eee;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      min-width: 600px;
+    }
+
+    /* Mobile Media Queries */
+    @media (max-width: 768px) {
+      .kpi-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .chart-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .planner-grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .subject-row {
+        grid-template-columns: 1fr;
+        padding: 15px;
+        gap: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .student-name-display {
+        width: 100%;
+        text-align: right;
+        margin-top: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .kpi-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Dark Mode Toggle */
+    .theme-switch-wrapper {
+      display: flex;
+      align-items: center;
+      margin-left: 15px;
+    }
+
+    .theme-switch {
+      display: inline-block;
+      height: 24px;
+      position: relative;
+      width: 50px;
+    }
+
+    .theme-switch input {
+      display: none;
+    }
+
+    .slider {
+      background-color: #ccc;
+      bottom: 0;
+      cursor: pointer;
+      left: 0;
+      position: absolute;
+      right: 0;
+      top: 0;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      background-color: #fff;
+      bottom: 4px;
+      content: "";
+      height: 16px;
+      left: 4px;
+      position: absolute;
+      transition: .4s;
+      width: 16px;
+      border-radius: 50%;
+    }
+
+    input:checked+.slider {
+      background-color: var(--powerbi-blue);
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(26px);
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white;
+        color: black;
+      }
+
+      .dashboard-header .view-history-btn,
+      .theme-switch-wrapper,
+      .no-print {
+        display: none !important;
+      }
+
+      .dashboard-container {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      .kpi-card,
+      .chart-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+      }
+    }
+
+    /* News Ticker Styles */
+    .news-ticker-container {
+      background: var(--card-bg);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      /* Subtle shadow */
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      border-left: 5px solid var(--powerbi-accent);
+    }
+
+    .news-label {
+      background: var(--powerbi-accent);
+      color: #000;
+      padding: 12px 20px;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .news-content-wrapper {
+      flex: 1;
+      padding: 12px 20px;
+      position: relative;
+      overflow: hidden;
+      height: 44px;
+      /* Fixed height for vertical slide */
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+    }
+
+    .news-item {
+      position: absolute;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease;
+      font-weight: 500;
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .news-item.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .news-item.exit {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    .news-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(0, 176, 173, 0.15);
+      color: var(--powerbi-blue);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+
+</head>
+
+<body>
+  <!-- Hidden data container for JS -->
+  <script type="application/json" id="subjects-data">
+        {{ preserved_data | tojson | safe }}
+    </script>
+  <div class="dashboard-container">
+    <div class="dashboard-header">
+      <div>
+        <div class="header-title">Academic Performance Analysis</div>
+        <div class="header-subtitle">Dashboard</div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <div class="student-name-display">
+          <span style="color: var(--powerbi-blue); font-weight: 600">STUDENT:</span>
+          <span id="studentName">{{ student_name }}</span>
+        </div>
+
+        <div class="theme-switch-wrapper">
+          <label class="theme-switch" for="checkbox">
+            <input type="checkbox" id="checkbox" />
+            <span class="slider round"></span>
+          </label>
+          <span style="margin-left: 10px; font-size: 14px;">🌙</span>
+        </div>
+        <button onclick="window.location.href='/'"
+          style="background: #666; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px;">Back
+          New Prediction</button>
+
+        <button onclick="window.print()" class="view-history-btn"
+          style="margin: 0; padding: 8px 16px; font-size: 14px;">
+          🖨️ Save Plan
+        </button>
+      </div>
+    </div>
+
+    <div class="prediction-highlight">
+      <div class="prediction-label">Your Predicted CGPA</div>
+      <div class="prediction-value" id="predictedCGPA">
+        {{ predicted_cgpa }}
+        {% if predicted_cgpa >= 8.5 %}
+        <span class="prediction-status excellent">Excellent!</span>
+        {% elif predicted_cgpa >= 7.0 %}
+        <span class="prediction-status good">Good Performance</span>
+        {% else %}
+        <span class="prediction-status improve">Needs Improvement</span>
+        {% endif %}
+      </div>
+      <div class="prediction-message">
+        Based on your academic history and current performance metrics
+        <div class="performance-breakdown">
+          <span class="breakdown-item">
+            <i class="trend-icon"
+              style="--trend-color: {% if sem2_gpa > sem1_gpa %}#2ecc71{% elif sem2_gpa == sem1_gpa %}#f39c12{% else %}#e74c3c{% endif %}; color: var(--trend-color);">
+              {% if sem2_gpa > sem1_gpa %}↑{% elif sem2_gpa == sem1_gpa %}→{% else %}↓{% endif %}
+            </i>
+            Semester Trend
+          </span>
+          <span class="breakdown-item">
+            <i class="attendance-icon">✓</i>
+            {{ attendance }}% Attendance
+          </span>
+          <span class="breakdown-item">
+            <i class="study-icon">⏱</i>
+            {{ study_hours }}h Weekly Study
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-title">Attendance Rate</div>
+        <div class="kpi-value" id="attendanceKPI">{{ attendance }}%</div>
+        <div class="kpi-change"
+          style="--kpi-color: {{ 'green' if attendance|float >= 75 else 'orange' if attendance|float >= 50 else 'red' }}; color: var(--kpi-color);">
+          {% if attendance|float >= 90 %} Excellent attendance! Keep it up! 🎯
+          {% elif attendance|float >= 75 %} Good attendance! Aim for perfect!
+          👍 {% elif attendance|float >= 50 %} Needs improvement. Try to
+          attend more classes. 📅 {% else %} Low attendance. Consult your
+          advisor. ⚠️ {% endif %}
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Study Hours/Week</div>
+        <div class="kpi-value" id="studyHoursKPI">{{ study_hours }}</div>
+        <div class="kpi-change"
+          style="--kpi-color: {{ 'green' if study_hours|float >= 15 else 'orange' if study_hours|float >= 10 else 'red' }}; color: var(--kpi-color);">
+          {% if study_hours|float >= 20 %} Amazing dedication! Keep the
+          momentum! 📚 {% elif study_hours|float >= 15 %} Good study habits.
+          Consistency is key! ✨ {% elif study_hours|float >= 10 %} Consider
+          adding 2-3 more hours weekly. ⏳ {% else %} Significant room for
+          improvement. Start small! 🎯 {% endif %}
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Project Completion</div>
+        <div class="kpi-value" id="projectsKPI">{{ projects_completed }}</div>
+        <div class="kpi-change"
+          style="--kpi-color: {{ 'green' if projects_completed|int >= 4 else 'orange' if projects_completed|int >= 2 else 'red' }}; color: var(--kpi-color);">
+          {% if projects_completed|int >= 4 %} Project superstar! Excellent
+          work! 🌟 {% elif projects_completed|int >= 2 %} Good progress. Keep
+          completing on time! 🚀 {% elif projects_completed|int == 1 %}
+          Started well. Focus on completing more! 📌 {% else %} Projects
+          pending. Plan your schedule! ⏰ {% endif %}
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Backlogs</div>
+        <div class="kpi-value" id="backlogsKPI">{{ backlogs }}</div>
+        <div class="kpi-change"
+          style="--kpi-color: {{ 'green' if backlogs|int == 0 else 'red' }}; color: var(--kpi-color);">
+          {% if backlogs|int == 0 %} Clean record! Maintain this streak! ✅
+          {% elif backlogs|int == 1 %} One backlog. Plan to clear it soon! 📝
+          {% else %} {{ backlogs }} backlogs. Prioritize clearing them! ⚠️
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <!-- Academic Trend -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Academic Trend</div>
+        </div>
+        <div class="chart-container" id="trendChart"></div>
+      </div>
+
+      <!-- Distribution Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Performance Distribution</div>
+        </div>
+        <div class="chart-container" id="distributionChart"></div>
+      </div>
+
+      <!-- Benchmark Comparison -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Benchmark Comparison</div>
+        </div>
+        <div class="chart-container" id="benchmarkChart"></div>
+      </div>
+
+      <!-- Study Correlation -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Study Habit Correlation</div>
+        </div>
+        <div class="chart-container" id="correlationChart"></div>
+      </div>
+    </div>
+
+    <!-- Metrics Table -->
+    <div class="table-container">
+      <div class="chart-header">
+        <div class="chart-title">Detailed Metrics</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Benchmark</th>
+            <th>Status</th>
+            <th>Feedback</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Attendance (%)</td>
+            <td>{{ attendance }}</td>
+            <td>75</td>
+            <td
+              style="--status-color: {{ 'green' if attendance >= 85 else 'orange' if attendance >= 75 else 'red' }}; color: var(--status-color);">
+              {{ 'Excellent' if attendance >= 85 else 'Good' if attendance >= 75 else 'Needs Improvement' }}
+            </td>
+            <td style="font-size: 0.9em">
+              {% if attendance >= 90 %}Perfect! Maintain this consistency 🎯
+              {% elif attendance >= 85 %}Great! Aim for perfect attendance ✨
+              {% elif attendance >= 75 %}Good, but try to attend more classes
+              📅 {% else %}Low attendance affects learning. Consult advisor
+              ⚠️{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>High School GPA (%)</td>
+            <td>{{ highschool_gpa }}</td>
+            <td>70</td>
+            <td
+              style="--status-color: {{ 'green' if highschool_gpa >= 80 else 'orange' if highschool_gpa >= 70 else 'red' }}; color: var(--status-color);">
+              {{ 'Strong' if highschool_gpa >= 80 else 'Adequate' if highschool_gpa >= 70 else 'Weak' }}
+            </td>
+            <td style="font-size: 0.9em">
+              {% if highschool_gpa >= 85 %}Excellent foundation! 🏆
+              {% elif highschool_gpa >= 70 %}Solid base to build upon 📚
+              {% else %}Consider foundational review sessions 🎯{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>Internal Assessments</td>
+            <td>{{ internal_assessments }}</td>
+            <td>16</td>
+            <td
+              style="--status-color: {{ 'green' if internal_assessments >= 18 else 'orange' if internal_assessments >= 16 else 'red' }}; color: var(--status-color);">
+              {{ 'High' if internal_assessments >= 18 else 'Met' if internal_assessments >= 16 else 'Low' }}
+            </td>
+            <td style="font-size: 0.9em">
+              {% if internal_assessments >= 20 %}Outstanding performance! 🌟
+              {% elif internal_assessments >= 16 %}Meeting expectations 👍
+              {% else %}Review weak areas with instructors 📝{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>Participation Score</td>
+            <td>{{ participation_score }}</td>
+            <td>3.5</td>
+            <td
+              style="--status-color: {{ 'green' if participation_score >= 4.0 else 'orange' if participation_score >= 3.5 else 'red' }}; color: var(--status-color);">
+              {{ 'Active' if participation_score >= 4.0 else 'Average' if participation_score >= 3.5 else 'Passive' }}
+            </td>
+            <td style="font-size: 0.9em">
+              {% if participation_score >= 4.5 %}Class leader! Keep engaging
+              💬 {% elif participation_score >= 3.5 %}Good, try speaking up
+              more 🗣️ {% else %}Increased participation will help learning
+              🎯{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>Projects Completed</td>
+            <td>{{ projects_completed }}</td>
+            <td>3</td>
+            <td
+              style="--status-color: {{ 'green' if projects_completed >= 4 else 'orange' if projects_completed >= 3 else 'red' }}; color: var(--status-color);">
+              {{ 'Excellent' if projects_completed >= 4 else 'On Track' if projects_completed >= 3 else 'Behind' }}
+            </td>
+            <td style="font-size: 0.9em">
+              {% if projects_completed >= 5 %}Project superstar! 🚀
+              {% elif projects_completed >= 3 %}Meeting deadlines well ⏱️
+              {% else %}Prioritize project completion 📌{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>Study Hours/Week</td>
+            <td>{{ study_hours }}</td>
+            <td>12</td>
+            <td
+              style="--status-color: {{ 'green' if study_hours >= 15 else 'orange' if study_hours >= 12 else 'red' }}; color: var(--status-color);">
+              {{ 'Ideal' if study_hours >= 15 else 'Adequate' if study_hours >= 12 else 'Insufficient' }}
+            </td>
+            <td style="font-size: 0.9em">
+              {% if study_hours >= 18 %}Perfect study routine! 📖
+              {% elif study_hours >= 12 %}Good, consider adding 2-3 hours ⏳
+              {% else %}Significantly increase study time 🎯{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>Backlogs</td>
+            <td>{{ backlogs }}</td>
+            <td>0</td>
+            <td
+              style="--status-color: {{ 'green' if backlogs == 0 else 'orange' if backlogs == 1 else 'red' }}; color: var(--status-color);">
+              {{ 'Clear' if backlogs == 0 else '1 Pending' if backlogs == 1 else backlogs ~ ' Pending' }}
+            </td>
+            <td style="font-size: 0.9em">
+              {% if backlogs == 0 %}Clean record! Maintain this ✅
+              {% elif backlogs == 1 %}Focus on clearing this soon 📅
+              {% else %}Create backlog clearance plan immediately ⚠️{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>Semester 1 GPA</td>
+            <td>{{ sem1_gpa }}</td>
+            <td>8.0</td>
+            <td
+              style="--status-color: {{ 'green' if sem1_gpa >= 8.5 else 'orange' if sem1_gpa >= 8.0 else 'red' }}; color: var(--status-color);">
+              {{ 'Strong' if sem1_gpa >= 8.5 else 'Good' if sem1_gpa >= 8.0 else 'Needs Work' }}
+            </td>
+            <td style="font-size: 0.9em">
+              {% if sem1_gpa >= 9.0 %}Outstanding semester! 🌟
+              {% elif sem1_gpa >= 8.0 %}Solid performance 👍
+              {% else %}Identify improvement areas for next sem 📊{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>Semester 2 GPA</td>
+            <td>{{ sem2_gpa }}</td>
+            <td>8.0</td>
+            <td
+              style="--status-color: {{ 'green' if sem2_gpa >= 8.5 else 'orange' if sem2_gpa >= 8.0 else 'red' }}; color: var(--status-color);">
+              {{ 'Strong' if sem2_gpa >= 8.5 else 'Good' if sem2_gpa >= 8.0 else 'Needs Work' }}
+            </td>
+            <td style="font-size: 0.9em">
+              {% if sem2_gpa > sem1_gpa %}Showing improvement! Keep it up 📈
+              {% elif sem2_gpa == sem1_gpa %}Consistent performance ⚖️
+              {% else %}Review what changed from last sem 🔍{% endif %}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="recommendations">
+      <div class="chart-header">
+        <div class="chart-title">
+          Personalized Performance Recommendations
+        </div>
+      </div>
+
+      <!-- Focus Areas -->
+      <div class="recommendation-item" style="border-left-color: #e74c3c">
+        <strong>🔍 Focus Areas:</strong>
+        <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px">
+          {% if sem1_gpa < 8.0 or sem2_gpa < 8.0 %} <li>
+            Advanced Mathematics - Strengthen core concepts through weekly practice sessions
+            </li>
+            {% endif %}
+            {% if attendance < 75 %} <li>
+              Attendance Improvement - Prioritize class attendance (current: {{attendance}}%)
+              </li>
+              {% endif %}
+              {% if study_hours < 12 %} <li>
+                Study Habits - Increase study time from {{study_hours}} to 12+ hours/week
+                </li>
+                {% endif %}
+                {% if backlogs > 0 %}
+                <li>
+                  Backlog Clearance - Create plan to clear {{backlogs}} pending backlog(s)
+                </li>
+                {% endif %}
+        </ul>
+      </div>
+
+      <!-- Immediate Actions -->
+      <div class="recommendation-item" style="border-left-color: #3498db">
+        <strong>🚀 Immediate Actions:</strong>
+        <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px">
+          {% if predicted_cgpa < 8.5 %} <li>
+            Add 2-3 hours of focused study time weekly for CGPA improvement
+            </li>
+            {% endif %}
+            {% if internal_assessments < 16 %} <li>
+              Schedule meetings with instructors to improve assessment scores
+              </li>
+              {% endif %}
+              {% if participation_score < 3.5 %} <li>
+                Increase class participation (current score: {{participation_score}}/5)
+                </li>
+                {% endif %}
+                <li>Join at least one peer study group this semester</li>
+        </ul>
+      </div>
+
+      <!-- Strengths to Maintain -->
+      <div class="recommendation-item" style="border-left-color: #2ecc71">
+        <strong>💪 Your Strengths:</strong>
+        <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px">
+          {% if attendance >= 85 %}
+          <li>
+            Excellent attendance ({{attendance}}%) - Maintain this consistency
+          </li>
+          {% endif %}
+          {% if projects_completed >= 3 %}
+          <li>
+            Strong project completion rate ({{projects_completed}} projects)
+          </li>
+          {% endif %}
+          {% if study_hours >= 15 %}
+          <li>
+            Good study habits ({{study_hours}} hours/week) - Keep this discipline
+          </li>
+          {% endif %}
+          {% if backlogs == 0 %}
+          <li>Clean academic record with no backlogs</li>
+          {% endif %}
+        </ul>
+      </div>
+
+      <!-- Long-term Strategies -->
+      <div class="recommendation-item" style="border-left-color: #9b59b6">
+        <strong>🎯 Long-term Strategies:</strong>
+        <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px">
+          <li>Develop semester-wise learning plan with academic advisor</li>
+          <li>Build professional portfolio with your best projects</li>
+          {% if predicted_cgpa >= 8.5 %}
+          <li>Consider undergraduate research opportunities</li>
+          {% else %}
+          <li>Focus on foundational concepts before advanced topics</li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Link to Mission Planner -->
+    <div class="recommendations"
+      style="margin-top: 30px; text-align: center; border-top: 4px solid var(--powerbi-accent); padding: 40px;">
+
+      <!-- IQ Test Link -->
+      <div style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px dashed #ccc;">
+        <h2 style="color: var(--powerbi-dark); margin-top: 0;">Want to test your cognitive skills?</h2>
+        <p style="color: #666; margin-bottom: 15px;">Challenge yourself with our new interactive IQ tests.</p>
+        <a href="/iq"
+          style="background: #6c757d; color: white; text-decoration: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; display: inline-block;">
+          Go to IQ Test Dashboard 🧠
+        </a>
+      </div>
+
+      <h2 style="color: var(--powerbi-blue); margin-top: 0;">Ready to take action?</h2>
+      <p style="color: #666; margin-bottom: 25px; font-size: 16px;">Use the <strong>Mission Planner</strong> to create a
+        personalized study schedule based on your predicted performance.</p>
+
+      <form action="/planner" method="POST" style="display: inline-block;">
+        <input type="hidden" name="student_name" value="{{ student_name }}">
+        <input type="hidden" name="sem1_gpa" value="{{ sem1_gpa }}">
+        <input type="hidden" name="sem2_gpa" value="{{ sem2_gpa }}">
+        <input type="hidden" name="attendance" value="{{ attendance }}">
+        <input type="hidden" name="backlogs" value="{{ backlogs }}">
+        <input type="hidden" name="internal_assessments" value="{{ internal_assessments }}">
+        <input type="hidden" name="projects_completed" value="{{ projects_completed }}">
+        <input type="hidden" name="highschool_gpa" value="{{ highschool_gpa }}">
+        <input type="hidden" name="participation_score" value="{{ participation_score }}">
+        <!-- Optional: Pass prediction if needed -->
+        <input type="hidden" name="predicted_cgpa" value="{{ predicted_cgpa }}">
+        <input type="hidden" name="study_hours" value="{{ study_hours }}">
+
+        <button type="submit"
+          style="background: var(--powerbi-blue); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px rgba(0, 176, 173, 0.4); display: flex; align-items: center; gap: 10px;">
+          <span>🚀</span> Open Mission Planner
+        </button>
+      </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        if (typeof Chart !== 'undefined') {
+          const checkboxes = document.querySelectorAll('.day-check');
+          const timetableChecks = document.querySelectorAll('.timetable-check');
+          const progressText = document.getElementById('progress-text');
+          const dailyProgressText = document.getElementById('daily-progress-text');
+          const dailyProgressBar = document.getElementById('daily-progress-bar');
+          const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+          // --- Daily Timetable Chart ---
+          const ctxDailyTimetable = document.getElementById('dailyTimetableChart');
+          let dailyTimetableChart = null;
+          if (ctxDailyTimetable) {
+            dailyTimetableChart = new Chart(ctxDailyTimetable.getContext('2d'), {
+              type: 'doughnut',
+              data: {
+                labels: ['Completed', 'Remaining'],
+                datasets: [{
+                  data: [0, 100],
+                  backgroundColor: ['#00b0ad', '#f2f2f2'],
+                  borderWidth: 0,
+                  hoverOffset: 4
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                  legend: { display: false }
+                }
+              }
+            });
+          }
+
+          // --- 0. Existing Progress Chart ---
+          const ctxProgress = document.getElementById('progressChart');
+          let progressChart = null;
+          if (ctxProgress) {
+            progressChart = new Chart(ctxProgress.getContext('2d'), {
+              type: 'line',
+              data: {
+                labels: days,
+                datasets: [{
+                  label: 'Consistency Growth (%)',
+                  data: [0, 0, 0, 0, 0, 0, 0],
+                  borderColor: '#28a745',
+                  backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                  borderWidth: 3,
+                  fill: true,
+                  tension: 0.3
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    max: 100
+                  }
+                }
+              }
+            });
+          }
+
+          // --- 1. Cumulative Progress Chart ---
+          const ctxCumulative = document.getElementById('cumulativeChart');
+          let cumulativeChart = null;
+          if (ctxCumulative) {
+            cumulativeChart = new Chart(ctxCumulative.getContext('2d'), {
+              type: 'line',
+              data: {
+                labels: days,
+                datasets: [{
+                  label: 'Cumulative Days',
+                  data: [0, 0, 0, 0, 0, 0, 0],
+                  borderColor: '#007bff',
+                  tension: 0.4,
+                  fill: false
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    max: 7,
+                    ticks: {
+                      stepSize: 1
+                    }
+                  }
+                }
+              }
+            });
+          }
+
+          // --- 2. Daily Completion Bar ---
+          const ctxDaily = document.getElementById('dailyBar');
+          let dailyBar = null;
+          if (ctxDaily) {
+            dailyBar = new Chart(ctxDaily.getContext('2d'), {
+              type: 'bar',
+              data: {
+                labels: days,
+                datasets: [{
+                  label: 'Status (1=Done)',
+                  data: [0, 0, 0, 0, 0, 0, 0],
+                  backgroundColor: '#17a2b8'
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    max: 1,
+                    ticks: {
+                      stepSize: 1
+                    }
+                  }
+                }
+              }
+            });
+          }
+
+          // --- 3. Missed Trend ---
+          const ctxMissed = document.getElementById('missedChart');
+          let missedChart = null;
+          if (ctxMissed) {
+            missedChart = new Chart(ctxMissed.getContext('2d'), {
+              type: 'line',
+              data: {
+                labels: days,
+                datasets: [
+                  {
+                    label: 'Completed',
+                    data: [0, 0, 0, 0, 0, 0, 0],
+                    borderColor: '#28a745',
+                    tension: 0.1
+                  },
+                  {
+                    label: 'Missed',
+                    data: [0, 0, 0, 0, 0, 0, 0],
+                    borderColor: '#dc3545',
+                    tension: 0.1
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    max: 1,
+                    ticks: {
+                      stepSize: 1
+                    }
+                  }
+                }
+              }
+            });
+          }
+
+          // --- 4. Consistency Chart ---
+          const ctxConsistency = document.getElementById('consistencyChart');
+          let consistencyChart = null;
+          if (ctxConsistency) {
+            consistencyChart = new Chart(ctxConsistency.getContext('2d'), {
+              type: 'line',
+              data: {
+                labels: days,
+                datasets: [{
+                  label: 'Consistency %',
+                  data: [0, 0, 0, 0, 0, 0, 0],
+                  borderColor: '#6610f2',
+                  tension: 0.3,
+                  fill: true,
+                  backgroundColor: 'rgba(102, 16, 242, 0.1)'
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    max: 100
+                  }
+                }
+              }
+            });
+          }
+
+          // --- 5. Effort Chart (Simulated based on Daily Hours) ---
+          const dailyHours = parseFloat("{{ daily_hours }}") || 4;
+          const effortData = [dailyHours, dailyHours, dailyHours, dailyHours + 1, dailyHours + 1, dailyHours - 1, dailyHours - 2].map(h => Math.max(0.5, h));
+
+          const ctxEffort = document.getElementById('effortChart');
+          if (ctxEffort) {
+            new Chart(ctxEffort.getContext('2d'), {
+              type: 'bar',
+              data: {
+                labels: days,
+                datasets: [{
+                  label: 'Planned Hours',
+                  data: effortData,
+                  backgroundColor: '#fd7e14'
+                }]
+              },
+              options: { responsive: true, maintainAspectRatio: false }
+            });
+          }
+
+          // --- 6. Radar Chart (Static Health) ---
+          // Use safe defaults for template variables
+          const focusScore = window.comprehensive_plan ? (window.comprehensive_plan.focus_score || 0) : 0;
+          const riskScore = window.comprehensive_plan ? (window.comprehensive_plan.risk_score || 0) : 0;
+
+          const ctxRadar = document.getElementById('radarChart');
+          if (ctxRadar) {
+            new Chart(ctxRadar.getContext('2d'), {
+              type: 'radar',
+              data: {
+                labels: ['Consistency', 'Focus', 'Practice', 'Revision', 'Backlog Mgmt'],
+                datasets: [{
+                  label: 'Current Stats',
+                  data: [
+                    Math.min(100, focusScore * 5),
+                    Math.min(100, focusScore * 4),
+                    75,
+                    80,
+                    Math.max(0, 100 - riskScore)
+                  ],
+                  fill: true,
+                  backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                  borderColor: 'rgb(255, 99, 132)',
+                  pointBackgroundColor: 'rgb(255, 99, 132)',
+                  pointBorderColor: '#fff',
+                  pointHoverBackgroundColor: '#fff',
+                  pointHoverBorderColor: 'rgb(255, 99, 132)'
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  r: { min: 0, max: 100 }
+                }
+              }
+            });
+          }
+
+          // DARK MODE & RESOURCES LOGIC
+          try {
+            // 1. Dark Mode
+            const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
+            if (toggleSwitch) {
+              const currentTheme = localStorage.getItem('theme');
+              if (currentTheme) {
+                document.body.classList.add(currentTheme);
+                if (currentTheme === 'dark-mode') toggleSwitch.checked = true;
+              }
+              toggleSwitch.addEventListener('change', function (e) {
+                if (e.target.checked) {
+                  document.body.classList.add('dark-mode');
+                  localStorage.setItem('theme', 'dark-mode');
+                } else {
+                  document.body.classList.remove('dark-mode');
+                  localStorage.setItem('theme', 'light-mode');
+                }
+              });
+            }
+
+            // 2. Smart Resources
+            const dataElement = document.getElementById('subjects-data');
+            let subjectsData = [];
+            if (dataElement) {
+              try {
+                subjectsData = JSON.parse(dataElement.textContent);
+              } catch (e) { console.error("Failed to parse subjects data", e); }
+            }
+
+            if (subjectsData && subjectsData.length > 0) {
+              const resourceMap = {
+                'math': { name: 'Khan Academy (Math)', url: 'https://www.khanacademy.org/math' },
+                'calculus': { name: 'Paul\'s Online Math Notes', url: 'https://tutorial.math.lamar.edu/' },
+                'physics': { name: 'HyperPhysics', url: 'http://hyperphysics.phy-astr.gsu.edu/hbase/hframe.html' },
+                'chem': { name: 'ChemGuide', url: 'https://www.chemguide.co.uk/' },
+                'program': { name: 'GeeksForGeeks', url: 'https://www.geeksforgeeks.org/' },
+                'code': { name: 'FreeCodeCamp', url: 'https://www.freecodecamp.org/' },
+                'java': { name: 'Oracle Java Docs', url: 'https://docs.oracle.com/en/java/' },
+                'python': { name: 'Real Python', url: 'https://realpython.com/' },
+                'history': { name: 'CrashCourse History', url: 'https://www.youtube.com/user/crashcourse' },
+                'bio': { name: 'Biology Corner', url: 'https://www.biologycorner.com/' },
+                'english': { name: 'Purdue OWL', url: 'https://owl.purdue.edu/' },
+                'economics': { name: 'Investopedia', url: 'https://www.investopedia.com/' }
+              };
+
+              const listEl = document.getElementById('resourceList');
+              const cardEl = document.getElementById('smartResourcesCard');
+              let hasMatch = false;
+
+              subjectsData.forEach(sub => {
+                const sName = (sub.subject || "").toLowerCase();
+                for (const [key, res] of Object.entries(resourceMap)) {
+                  if (sName.includes(key)) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${sub.subject}:</strong> <a href="${res.url}" target="_blank" style="color:var(--powerbi-blue); text-decoration: underline;">${res.name}</a>`;
+                    listEl.appendChild(li);
+                    hasMatch = true;
+                  }
+                }
+              });
+
+              if (!hasMatch && subjectsData.length > 0) {
+                const li = document.createElement('li');
+                li.innerHTML = `Explore <strong>Coursera</strong> or <strong>EdX</strong> for these specific topics.`;
+                listEl.appendChild(li);
+                hasMatch = true;
+              }
+              if (hasMatch && cardEl) cardEl.style.display = 'block';
+            }
+
+          } catch (e) { console.error("Enhancement Error:", e); }
+        }
+      });
+    </script>
+
+
+  </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // Set values from URL parameters or use template values
+      document.getElementById("studentName").textContent =
+        urlParams.get("student_name") || "{{ student_name }}";
+      document.getElementById("predictedCGPA").textContent =
+        urlParams.get("cgpa") || "{{ predicted_cgpa }}";
+      document.getElementById("attendanceKPI").textContent =
+        (urlParams.get("attendance") || "{{ attendance }}") + "%";
+      document.getElementById("studyHoursKPI").textContent =
+        urlParams.get("study_hours") || "{{ study_hours }}";
+      document.getElementById("projectsKPI").textContent =
+        urlParams.get("projects_completed") || "{{ projects_completed }}";
+      document.getElementById("backlogsKPI").textContent =
+        urlParams.get("backlogs") || "{{ backlogs }}";
+
+      // Update change indicators if parameters exist
+      if (urlParams.has("attendance_change")) {
+        document.querySelector("#attendanceKPI + .kpi-change").textContent =
+          urlParams.get("attendance_change");
+      }
+      if (urlParams.has("study_hours_change")) {
+        document.querySelector("#studyHoursKPI + .kpi-change").textContent =
+          urlParams.get("study_hours_change");
+      }
+      if (urlParams.has("projects_change")) {
+        document.querySelector("#projectsKPI + .kpi-change").textContent =
+          urlParams.get("projects_change");
+      }
+      if (urlParams.has("backlogs")) {
+        const backlogs = parseInt(urlParams.get("backlogs"));
+        const backlogElement = document.querySelector(
+          "#backlogsKPI + .kpi-change"
+        );
+        backlogElement.textContent =
+          backlogs === 0
+            ? "No pending backlogs"
+            : backlogs + " pending backlogs";
+        backlogElement.style.color = backlogs === 0 ? "#4CAF50" : "red";
+      }
+
+      // Initialize charts
+      // Initialize charts
+      const trendChart = echarts.init(document.getElementById("trendChart"));
+
+      // Make charts responsive
+      window.addEventListener('resize', function () {
+        trendChart.resize();
+        distributionChart.resize();
+        // Add other echarts instances if any
+        if (typeof benchmarkChart !== 'undefined') benchmarkChart.resize();
+        if (typeof correlationChart !== 'undefined') correlationChart.resize();
+      });
+      trendChart.setOption({
+        title: {
+          text: "Academic Performance Trend",
+          left: "center",
+          textStyle: {
+            fontSize: 14,
+            fontWeight: "normal",
+            color: "#2b2b2b",
+          },
+        },
+        tooltip: {
+          trigger: "axis",
+          formatter: function (params) {
+            let result = params[0].axisValue + "<br />";
+            params.forEach((param) => {
+              const value = param.value.toFixed(2);
+              const diff =
+                param.seriesName === "Your GPA"
+                  ? (param.value - classAverage[params[0].dataIndex]).toFixed(2)
+                  : "";
+              result += `${param.marker} ${param.seriesName}: <strong>${value}</strong>`;
+              if (diff !== "") {
+                result += ` (${diff > 0 ? "+" : ""}${diff})`;
+              }
+              result += "<br />";
+            });
+            return result;
+          },
+        },
+        legend: {
+          data: ["Your GPA", "Class Avg"],
+          bottom: 0,
+        },
+        grid: {
+          left: "3%",
+          right: "4%",
+          bottom: "15%",
+          top: "15%",
+          containLabel: true,
+        },
+        xAxis: {
+          type: "category",
+          data: ["Sem 1", "Sem 2", "Predicted"],
+          axisLabel: {
+            interval: 0,
+            fontSize: 12,
+          },
+        },
+        yAxis: {
+          type: "value",
+          min: 6,
+          max: 10,
+          axisLabel: {
+            formatter: "{value}",
+          },
+          splitLine: {
+            lineStyle: {
+              type: "dashed",
+            },
+          },
+        },
+        series: [
+          {
+            name: "Your GPA",
+            type: "line",
+            smooth: true,
+            symbol: "circle",
+            symbolSize: 8,
+            lineStyle: {
+              width: 3,
+            },
+            data: [
+              parseFloat(urlParams.get("sem1_gpa")) ||
+              parseFloat("{{ sem1_gpa }}") ||
+              0,
+              parseFloat(urlParams.get("sem2_gpa")) ||
+              parseFloat("{{ sem2_gpa }}") ||
+              0,
+              parseFloat(urlParams.get("cgpa")) ||
+              parseFloat("{{ predicted_cgpa }}") ||
+              0,
+            ],
+            itemStyle: {
+              color: "#00B0AD",
+              borderColor: "#fff",
+              borderWidth: 2,
+            },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: "rgba(0, 176, 173, 0.3)" },
+                { offset: 1, color: "rgba(0, 176, 173, 0.1)" },
+              ]),
+            },
+            label: {
+              show: true,
+              formatter: "{c}",
+              position: "top",
+            },
+            markPoint: {
+              data: [
+                { type: "max", name: "Highest" },
+                { type: "min", name: "Lowest" },
+              ],
+            },
+          },
+          {
+            name: "Class Avg",
+            type: "line",
+            smooth: true,
+            symbol: "diamond",
+            symbolSize: 8,
+            lineStyle: {
+              width: 2,
+              type: "dashed",
+            },
+            data: [7.8, 8.1, 8.3],
+            itemStyle: {
+              color: "#FFB900",
+              borderColor: "#fff",
+              borderWidth: 2,
+            },
+          },
+        ],
+      });
+
+      // Class average data reference for tooltip calculations
+      const classAverage = [7.8, 8.1, 8.3];
+      const distributionChart = echarts.init(
+        document.getElementById("distributionChart")
+      );
+      distributionChart.setOption({
+        tooltip: {
+          trigger: "item",
+          formatter: "{a} <br />{b}: {c} ({d}%)",
+        },
+        legend: {
+          orient: "vertical",
+          right: 10,
+          top: "center",
+          data: [
+            "Sem 1 GPA",
+            "Sem 2 GPA",
+            "Participation",
+            "Attendance",
+            "Study Hours",
+          ],
+        },
+        series: [
+          {
+            name: "Performance Distribution",
+            type: "pie",
+            radius: ["30%", "70%"],
+            avoidLabelOverlap: false,
+            itemStyle: {
+              borderRadius: 5,
+              borderColor: "#fff",
+              borderWidth: 2,
+            },
+            label: {
+              show: true,
+              formatter: "{b}: {c}",
+            },
+            emphasis: {
+              label: {
+                show: true,
+                fontSize: "16",
+                fontWeight: "bold",
+              },
+            },
+            labelLine: {
+              show: true,
+            },
+            data: [
+              {
+                value:
+                  parseFloat(urlParams.get("sem1_gpa")) ||
+                  parseFloat("{{ sem1_gpa }}") ||
+                  0,
+                name: "Sem 1 GPA",
+                itemStyle: { color: "#00B0AD" },
+              },
+              {
+                value:
+                  parseFloat(urlParams.get("sem2_gpa")) ||
+                  parseFloat("{{ sem2_gpa }}") ||
+                  0,
+                name: "Sem 2 GPA",
+                itemStyle: { color: "#007D79" },
+              },
+              {
+                value:
+                  parseFloat(urlParams.get("participation_score")) ||
+                  parseFloat("{{ participation_score }}") ||
+                  0,
+                name: "Participation",
+                itemStyle: { color: "#FFB900" },
+              },
+              {
+                value:
+                  parseFloat(urlParams.get("attendance")) ||
+                  parseFloat("{{ attendance }}") ||
+                  0,
+                name: "Attendance",
+                itemStyle: { color: "#E74C3C" },
+              },
+              {
+                value:
+                  parseFloat(urlParams.get("study_hours")) ||
+                  parseFloat("{{ study_hours }}") ||
+                  0,
+                name: "Study Hours",
+                itemStyle: { color: "#9B59B6" },
+              },
+            ],
+          },
+        ],
+      });
+
+      // Handle window resize
+      window.addEventListener("resize", function () {
+        distributionChart.resize();
+      });
+
+      const benchmarkChart = echarts.init(
+        document.getElementById("benchmarkChart")
+      );
+      benchmarkChart.setOption({
+        tooltip: {
+          trigger: "axis",
+          formatter: function (params) {
+            let result = params[0].name + "<br />";
+            params.forEach((param) => {
+              const value = param.value.toFixed(2);
+              result += `${param.marker} ${param.seriesName}: <strong>${value}</strong><br />`;
+            });
+            return result;
+          },
+        },
+        legend: {
+          data: ["Your Score", "Benchmark"],
+          textStyle: {
+            fontSize: 12,
+          },
+        },
+        grid: {
+          left: "3%",
+          right: "4%",
+          bottom: "3%",
+          containLabel: true,
+        },
+        xAxis: {
+          type: "category",
+          data: [
+            "Sem 1 GPA",
+            "Sem 2 GPA",
+            "Participation",
+            "Attendance",
+            "Study Hours",
+          ],
+          axisLabel: {
+            interval: 0,
+            rotate: 0,
+            fontSize: 11,
+          },
+        },
+        yAxis: {
+          type: "value",
+          min: function (value) {
+            return Math.max(0, value.min - 1);
+          },
+          axisLabel: {
+            formatter: "{value}",
+          },
+        },
+        series: [
+          {
+            name: "Your Score",
+            type: "bar",
+            barWidth: "40%",
+            data: [
+              parseFloat(urlParams.get("sem1_gpa")) ||
+              parseFloat("{{ sem1_gpa }}") ||
+              0,
+              parseFloat(urlParams.get("sem2_gpa")) ||
+              parseFloat("{{ sem2_gpa }}") ||
+              0,
+              parseFloat(urlParams.get("participation_score")) ||
+              parseFloat("{{ participation_score }}") ||
+              0,
+              parseFloat(urlParams.get("attendance")) ||
+              parseFloat("{{ attendance }}") ||
+              0,
+              parseFloat(urlParams.get("study_hours")) ||
+              parseFloat("{{ study_hours }}") ||
+              0,
+            ],
+            itemStyle: {
+              color: "#00B0AD",
+              borderRadius: [4, 4, 0, 0],
+            },
+            label: {
+              show: true,
+              position: "top",
+              formatter: "{c}",
+              fontSize: 11,
+            },
+          },
+          {
+            name: "Benchmark",
+            type: "bar",
+            barWidth: "40%",
+            data: [
+              8.0, // Sem 1 GPA benchmark
+              8.0, // Sem 2 GPA benchmark
+              3.5, // Participation benchmark
+              75, // Attendance benchmark
+              12, // Study Hours benchmark
+            ],
+            itemStyle: {
+              color: "#FFB900",
+              borderRadius: [4, 4, 0, 0],
+            },
+            label: {
+              show: true,
+              position: "top",
+              formatter: "{c}",
+              fontSize: 11,
+            },
+          },
+        ],
+      });
+
+      // Handle window resize for all charts
+      const handleResize = () => {
+        trendChart.resize();
+        distributionChart.resize();
+        benchmarkChart.resize();
+        correlationChart.resize();
+      };
+      window.addEventListener("resize", handleResize);
+
+      const correlationChart = echarts.init(
+        document.getElementById("correlationChart")
+      );
+      correlationChart.setOption({
+        tooltip: {
+          trigger: "axis",
+          formatter: "Study Hours: {b0}<br />Average CGPA: <b>{c0}</b>",
+          axisPointer: {
+            type: "shadow",
+          },
+        },
+        title: {
+          text: "Study Hours vs CGPA Correlation",
+          left: "center",
+          textStyle: {
+            fontSize: 14,
+            fontWeight: "normal",
+          },
+        },
+        grid: {
+          left: "3%",
+          right: "4%",
+          bottom: "3%",
+          containLabel: true,
+        },
+        xAxis: {
+          type: "category",
+          name: "Study Hours/Week",
+          nameLocation: "middle",
+          nameGap: 25,
+          data: ["<5", "5-10", "10-15", "15-20", "20+"],
+          axisLabel: {
+            interval: 0,
+          },
+        },
+        yAxis: {
+          type: "value",
+          name: "CGPA",
+          min: 6,
+          max: 9,
+          axisLine: {
+            show: true,
+          },
+          splitLine: {
+            show: true,
+            lineStyle: {
+              type: "dashed",
+            },
+          },
+        },
+        series: [
+          {
+            name: "Hours vs CGPA",
+            type: "line",
+            smooth: true,
+            symbol: "circle",
+            symbolSize: 8,
+            lineStyle: {
+              width: 3,
+            },
+            data: [6.8, 7.2, 7.9, 8.4, 8.7],
+            itemStyle: {
+              color: "#00B0AD",
+              borderColor: "#fff",
+              borderWidth: 2,
+            },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: "rgba(0, 176, 173, 0.3)" },
+                { offset: 1, color: "rgba(0, 176, 173, 0.1)" },
+              ]),
+            },
+            markPoint: {
+              data: [
+                { type: "max", name: "Max" },
+                { type: "min", name: "Min" },
+              ],
+              symbolSize: 50,
+              label: {
+                formatter: "{c}",
+                color: "#fff",
+              },
+            },
+            label: {
+              show: true,
+              formatter: "{c}",
+              position: "top",
+            },
+          },
+        ],
+      });
+
+      // Auto-scroll to plan result if present
+      // --- Live-refresh helpers for ECharts ---
+      function parseNumber(value, fallback = 0) {
+        const n = parseFloat(value);
+        return Number.isFinite(n) ? n : fallback;
+      }
+
+      function refreshEcharts() {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const sem1 = parseNumber(params.get('sem1_gpa') || '{{ sem1_gpa }}');
+          const sem2 = parseNumber(params.get('sem2_gpa') || '{{ sem2_gpa }}');
+          const cgpa = parseNumber(params.get('cgpa') || '{{ predicted_cgpa }}');
+          const participation = parseNumber(params.get('participation_score') || '{{ participation_score }}');
+          const attendanceVal = parseNumber(params.get('attendance') || '{{ attendance }}');
+          const studyHoursVal = parseNumber(params.get('study_hours') || '{{ study_hours }}');
+
+          // Update trendChart series
+          if (typeof trendChart !== 'undefined') {
+            trendChart.setOption({
+              series: [
+                { data: [sem1, sem2, cgpa] },
+                { /* Class Avg stays static or could be set here */ }
+              ]
+            });
+          }
+
+          // Update distribution pie
+          if (typeof distributionChart !== 'undefined') {
+            distributionChart.setOption({
+              series: [{
+                data: [
+                  { value: sem1, name: 'Sem 1 GPA', itemStyle: { color: '#00B0AD' } },
+                  { value: sem2, name: 'Sem 2 GPA', itemStyle: { color: '#007D79' } },
+                  { value: participation, name: 'Participation', itemStyle: { color: '#FFB900' } },
+                  { value: attendanceVal, name: 'Attendance', itemStyle: { color: '#E74C3C' } },
+                  { value: studyHoursVal, name: 'Study Hours', itemStyle: { color: '#9B59B6' } }
+                ]
+              }]
+            });
+          }
+
+          // Update benchmark bars
+          if (typeof benchmarkChart !== 'undefined') {
+            benchmarkChart.setOption({
+              series: [
+                { data: [sem1, sem2, participation, attendanceVal, studyHoursVal] },
+                { /* benchmark series unchanged */ }
+              ]
+            });
+          }
+
+          // Update correlation chart: shift line slightly based on study hours
+          if (typeof correlationChart !== 'undefined') {
+            // simple mapping: adjust last point by studyHoursVal impact
+            const base = [6.8, 7.2, 7.9, 8.4, 8.7];
+            const idx = Math.min(Math.floor(studyHoursVal / 5), base.length - 1);
+            base[idx] = Math.max(6, Math.min(9, base[idx] + (studyHoursVal - 10) * 0.02));
+            correlationChart.setOption({ series: [{ data: base }] });
+          }
+        } catch (e) {
+          console.error('refreshEcharts error', e);
+        }
+      }
+
+      // Observe KPI DOM changes to refresh charts live
+      (function attachObservers() {
+        const watchIds = ['attendanceKPI', 'studyHoursKPI', 'projectsKPI', 'backlogsKPI', 'predictedCGPA'];
+        const observer = new MutationObserver(() => refreshEcharts());
+        watchIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) observer.observe(el, { childList: true, characterData: true, subtree: true });
+        });
+        // Expose for manual calls
+        window.refreshCharts = refreshEcharts;
+        // Run once to pick up initial template/URL values
+        refreshEcharts();
+      })();
+      // Dark Mode Logic
+      const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
+      const currentTheme = localStorage.getItem('theme');
+
+      if (currentTheme) {
+        document.body.classList.add(currentTheme);
+        if (currentTheme === 'dark-mode') {
+          toggleSwitch.checked = true;
+        }
+      }
+
+      function switchTheme(e) {
+        if (e.target.checked) {
+          document.body.classList.add('dark-mode');
+          localStorage.setItem('theme', 'dark-mode');
+        } else {
+          document.body.classList.remove('dark-mode');
+          localStorage.setItem('theme', 'light-mode');
+        }
+      }
+      if (toggleSwitch) {
+        toggleSwitch.addEventListener('change', switchTheme, false);
+      }
+
+      // News Ticker Logic
+      function initNewsTicker() {
+        const feed = document.getElementById('newsFeed');
+        if (!feed) return;
+
+        const newsItems = [
+          { type: 'Info', text: 'Exam Schedule for Sem 5 released! Check portal.', color: '#00b0ad' },
+          { type: 'Tip', text: 'Start revising "Data Structures" early.', color: '#ffb900' },
+          { type: 'Event', text: 'Campus Fest "Technova" registration opens tomorrow!', color: '#6a11cb' },
+          { type: 'Alert', text: 'Library closed for renovation this weekend.', color: '#ff5e62' }
+        ];
+
+        let index = 0;
+
+        function showNext() {
+          const item = newsItems[index];
+          // Use fade transition
+          const current = feed.querySelector('.news-item');
+          if (current) {
+            current.classList.remove('active');
+            current.classList.add('exit');
+          }
+
+          setTimeout(() => {
+            feed.innerHTML = `
+            <div class="news-item active">
+               <span class="news-badge" style="color:${item.color}; background:${item.color}22">${item.type}</span>
+               ${item.text}
+            </div>
+          `;
+          }, 500); // Wait for exit animation
+
+          index = (index + 1) % newsItems.length;
+        }
+
+        // Initial show
+        setTimeout(showNext, 100);
+        setInterval(showNext, 5000);
+      }
+      initNewsTicker();
+    });
+
+    function addSubject() {
+      const container = document.getElementById('subjects-container');
+      const row = document.createElement('div');
+      row.className = 'subject-row';
+      row.style.cssText = 'display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 0.5fr; gap: 10px; margin-bottom: 10px; align-items: end;';
+      row.innerHTML = `
+          <div>
+            <input type="text" name="subject_name" placeholder="Name" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+          <div>
+            <input type="number" name="difficulty" min="1" max="10" value="5" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+          <div>
+            <input type="number" name="tasks" min="1" value="1" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+          <div>
+            <input type="date" name="exam_date" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+          <div>
+            <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: var(--powerbi-accent); color: var(--powerbi-dark); border: none; padding: 8px; border-radius: 4px; cursor: pointer;">X</button>
+          </div>
+          `;
+      container.appendChild(row);
+    }
+
+    // Focus Timer Logic (Global Scope)
+    let timerInterval;
+    let timeLeft = 25 * 60;
+    let isRunning = false;
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      const display = document.getElementById('timerDisplay');
+      if (display) {
+        display.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      const status = document.getElementById('timerStatus');
+      if (status) status.innerText = "🔥 Focus Mode ON! Keep going.";
+
+      timerInterval = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft--;
+          updateTimerDisplay();
+        } else {
+          clearInterval(timerInterval);
+          isRunning = false;
+          if (status) status.innerText = "🎉 Session Complete! Take a break.";
+          // alert("Focus session complete!"); // Optional
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      const status = document.getElementById('timerStatus');
+      if (status) status.innerText = "⏸️ Paused";
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      timeLeft = 25 * 60;
+      updateTimerDisplay();
+      const status = document.getElementById('timerStatus');
+      if (status) status.innerText = "Ready to focus?";
+    }
+  </script>
+</body>
+
+</html>

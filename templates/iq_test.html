@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IQ Test - Level {{ level }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --powerbi-blue: #00b0ad;
+            --powerbi-dark: #2b2b2b;
+            --powerbi-light: #f2f2f2;
+            --powerbi-accent: #ffb900;
+            --bg-color: #f2f2f2;
+            --card-bg: #ffffff;
+            --text-color: #2b2b2b;
+            --border-color: #dddddd;
+        }
+
+        body.dark-mode {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --border-color: #404040;
+            --powerbi-light: #1a1a1a;
+        }
+
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .test-container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-top: 6px solid var(--powerbi-blue);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .level-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--powerbi-blue);
+        }
+
+        .timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--powerbi-accent);
+            background: rgba(255, 185, 0, 0.1);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: var(--powerbi-light);
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--powerbi-blue);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Question Styles */
+        .question-card {
+            display: none;
+        }
+
+        .question-card.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .question-text {
+            font-size: 22px;
+            margin-bottom: 30px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            border-color: var(--powerbi-blue);
+            transform: translateX(5px);
+        }
+
+        .option-btn.selected {
+            background: var(--powerbi-blue);
+            color: white;
+            border-color: var(--powerbi-blue);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            align-items: center;
+        }
+
+        .btn {
+            background: var(--powerbi-blue);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #008a87;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #ccc;
+        }
+
+        .status-text {
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* Dark Mode Override for Inputs */
+        body.dark-mode .option-btn:hover {
+            background: rgba(0, 176, 173, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="test-container">
+        <div class="header">
+            <div class="level-title">Level {{ level }} Challenge</div>
+            <div class="timer" id="timer">00:00</div>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <div id="quiz-area">
+            <!-- Dynamic Questions -->
+        </div>
+
+        <div class="controls">
+            <div class="status-text" id="statusText">Question 1 of ...</div>
+            <button class="btn" id="nextBtn" onclick="nextQuestion()">Next Question</button>
+        </div>
+    </div>
+
+    <script>
+        // Check for theme
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme) {
+            document.body.classList.add(currentTheme);
+        }
+
+        const questions = JSON.parse('{{ questions | tojson | safe | replace("\'", "\\\'") }}');
+        const level = "{{ level }}";
+        let currentIdx = 0;
+        let answers = {};
+        let startTime = Date.now();
+        let timerInterval;
+
+        const quizArea = document.getElementById('quiz-area');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressFill = document.getElementById('progress');
+        const timerEl = document.getElementById('timer');
+        const statusText = document.getElementById('statusText');
+
+        function init() {
+            if (!questions || questions.length === 0) {
+                quizArea.innerHTML = "<p>No questions found for this level.</p>";
+                return;
+            }
+
+            // Render all questions
+            quizArea.innerHTML = questions.map((q, idx) => `
+                <div class="question-card ${idx === 0 ? 'active' : ''}" id="q-${idx}">
+                    <div class="question-text">${idx + 1}. ${q.question}</div>
+                    <div class="options-grid">
+                        ${q.options.map(opt => `
+                            <button class="option-btn" onclick="selectOption('${q.id}', '${opt}', this)">${opt}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            updateStatus();
+            startTimer();
+            updateProgress();
+        }
+
+        function selectOption(qid, value, btnEl) {
+            answers[qid] = value;
+            // Visual feedback
+            const parent = btnEl.parentElement;
+            Array.from(parent.children).forEach(c => c.classList.remove('selected'));
+            btnEl.classList.add('selected');
+        }
+
+        function nextQuestion() {
+            if (currentIdx < questions.length - 1) {
+                document.getElementById(`q-${currentIdx}`).classList.remove('active');
+                currentIdx++;
+                document.getElementById(`q-${currentIdx}`).classList.add('active');
+
+                if (currentIdx === questions.length - 1) {
+                    nextBtn.innerText = "Submit Test";
+                    nextBtn.style.background = "#ffb900"; // Accent color for submit
+                }
+                updateProgress();
+                updateStatus();
+            } else {
+                submitTest();
+            }
+        }
+
+        function updateProgress() {
+            const pct = ((currentIdx + 1) / questions.length) * 100;
+            progressFill.style.width = pct + '%';
+        }
+
+        function updateStatus() {
+            statusText.innerText = `Question ${currentIdx + 1} of ${questions.length}`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const diff = Math.floor((Date.now() - startTime) / 1000);
+                const m = Math.floor(diff / 60).toString().padStart(2, '0');
+                const s = (diff % 60).toString().padStart(2, '0');
+                timerEl.innerText = `${m}:${s}`;
+            }, 1000);
+        }
+
+        async function submitTest() {
+            clearInterval(timerInterval);
+            nextBtn.innerText = "Submitting...";
+            nextBtn.disabled = true;
+
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
+            try {
+                const res = await fetch('/api/iq/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        level: level,
+                        answers: answers,
+                        time_spent: timeSpent
+                    })
+                });
+                const data = await res.json();
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            } catch (e) {
+                alert("Error submitting. Please try again.");
+                nextBtn.disabled = false;
+            }
+        }
+
+        init();
+    </script>
+
+</body>
+
+</html>
